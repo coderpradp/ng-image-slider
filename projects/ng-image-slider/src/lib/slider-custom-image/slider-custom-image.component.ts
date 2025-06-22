@@ -50,50 +50,93 @@ export class SliderCustomImageComponent implements OnChanges {
     }
 
     ngOnChanges(changes: SimpleChanges) {
-        if (this.imageUrl
-            && this.imageUrl
-            && this.imageUrl
-            && typeof (this.imageUrl) === 'string'
-            && (
-                (changes.imageUrl && changes.imageUrl.firstChange)
-                ||
-                (this.videoAutoPlay)
-               )) {
-            this.setUrl();
+      if (this.imageUrl && typeof this.imageUrl === 'string') {
+        const firstChange = changes.imageUrl?.firstChange ?? false;
+        if (firstChange || this.videoAutoPlay) {
+          this.setUrl();
         }
+      }
     }
 
     setUrl() {
-        const url = this.imageUrl;
-        this.imageLoading = true;
+      const url: string = this.imageUrl;
+      this.imageLoading = true;
+
+      let extension = '';
+
+      if (url.startsWith('data:')) {
+        extension = this.imageSliderService
+          .base64FileExtension(url)
+          .toLowerCase();
+      } else {
+        try {
+          // Parse the URL and extract pathname to avoid query param issues
+          const parsedUrl = new URL(url);
+          const pathname = parsedUrl.pathname;
+          const pathParts = pathname.split('.');
+          if (pathParts.length > 1) {
+            extension = pathParts.pop().toLowerCase();
+          }
+        } catch {
+          // Fallback
+          const parts = url.split('.');
+          if (parts.length > 1) {
+            extension = parts.pop().split(/\#|\?/)[0].toLowerCase();
+          }
+        }
+      }
+
+      this.fileExtension = extension;
+
+      // Check if it's a YouTube URL
+      const match = url.match(youtubeRegExp);
+      if (match && match[2]?.length === 11) {
+        const videoId = match[2];
+        if (this.showVideo) {
+          this.type = this.YOUTUBE;
+          const autoplayParam = this.videoAutoPlay ? '1' : '0';
+          this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
+            `https://www.youtube.com/embed/${videoId}?autoplay=${autoplayParam}&enablejsapi=1&controls=${this.showVideoControls}`,
+          );
+        } else {
+          this.type = this.IMAGE;
+          this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
+            `https://img.youtube.com/vi/${videoId}/0.jpg`,
+          );
+        }
+        this.fileExtension = '';
+        return;
+      }
+
+      // Check for valid image extension
+      if (validFileExtensions.includes(extension)) {
+        this.type = this.IMAGE;
         this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-        this.fileExtension = url.split('.').pop().split(/\#|\?/)[0];
-        if (this.imageSliderService.base64FileExtension(url)
-        && (validFileExtensions.indexOf(this.imageSliderService.base64FileExtension(url).toLowerCase()) > -1 
-        || validVideoExtensions.indexOf(this.imageSliderService.base64FileExtension(url).toLowerCase()) > -1)) {
-            this.fileExtension = this.imageSliderService.base64FileExtension(url);
+        return;
+      }
+
+      // Check for valid video extension
+      if (validVideoExtensions.includes(extension)) {
+        this.type = this.VIDEO;
+        this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+
+        if (this.videoAutoPlay) {
+          const videoElement = document.getElementById(
+            `video_${this.imageIndex}`,
+          ) as HTMLVideoElement;
+          if (videoElement) {
+            setTimeout(() => {
+              videoElement.play();
+            }, this.speed * 1000);
+          }
         }
-        // verify for youtube url
-        const match = url.match(youtubeRegExp);
-        if (match && match[2].length === 11) {
-            if (this.showVideo) {
-                this.type = this.YOUTUBE;
-                this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(`${'https://www.youtube.com/embed/'}${match[2]}${this.videoAutoPlay ? '?autoplay=1&enablejsapi=1' : '?autoplay=0&enablejsapi=1'}${'&controls='}${this.showVideoControls}`);
-            } else {
-                this.type = this.IMAGE;
-                this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(`https://img.youtube.com/vi/${match[2]}/0.jpg`);
-            }
-        } else if (this.fileExtension && validFileExtensions.indexOf(this.fileExtension.toLowerCase()) > -1) {
-            this.type = this.IMAGE;
-        } else if (this.fileExtension && validVideoExtensions.indexOf(this.fileExtension.toLowerCase()) > -1) {
-            this.type = this.VIDEO;
-            if (this.videoAutoPlay && document.getElementById(`video_${this.imageIndex}`)) {
-                const videoObj:any = document.getElementById(`video_${this.imageIndex}`);
-                setTimeout(() => {
-                    videoObj.play();
-                }, this.speed * 1000);
-            }
-        }
+        return;
+      }
+
+      // Fallback for unknown extensions: clear fileExtension and default to image
+      this.fileExtension = '';
+      this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl('');
+      this.type = this.IMAGE;
     }
 
     videoClickHandler(event) {
