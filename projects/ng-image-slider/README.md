@@ -22,7 +22,7 @@ Also support youtube and mp4 video urls.
 
 
 # Installation
-`npm install ng-image-slider --save`
+`npm install @coderpradp/ng-image-slider --save`
 
 # Setup :
 
