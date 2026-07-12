@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation, ViewChild } from '@angular/core';
+import { Component, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { NgImageSliderComponent } from '@coderpradp/ng-image-slider';
 import { HeroService } from "./hero.service";
 
@@ -10,24 +10,26 @@ import { HeroService } from "./hero.service";
     standalone: false
 })
 export class AppComponent {
-    @ViewChild('nav', {static: false}) ds: NgImageSliderComponent;
+    private heroService = inject(HeroService);
+
+    readonly ds = viewChild<NgImageSliderComponent>('nav');
     title = 'Ng Image Slider';
     showSlider = true;
 
-    sliderWidth: Number = 940;
-    sliderImageWidth: Number = 250;
-    sliderImageHeight: Number = 200;
-    sliderArrowShow: Boolean = true;
-    sliderInfinite: Boolean = false;
-    sliderImagePopup: Boolean = true;
-    sliderAutoSlide: Boolean = false;
-    sliderSlideImage: Number = 1;
+    sliderWidth = 940;
+    sliderImageWidth = 250;
+    sliderImageHeight = 200;
+    sliderArrowShow = true;
+    sliderInfinite = false;
+    sliderImagePopup = true;
+    sliderAutoSlide = false;
+    sliderSlideImage = 1;
     sliderAnimationSpeed: any = 1;
     imageObject;
     fallbackImageObject;
-    slideOrderType:string = 'DESC';
+    slideOrderType = 'DESC';
 
-    constructor(private heroService: HeroService) {
+    constructor() {
         this.setImageObject();
     }
 
@@ -66,10 +68,10 @@ export class AppComponent {
     }
 
     prevImageClick() {
-        this.ds.prev();
+        this.ds().prev();
     }
 
     nextImageClick() {
-        this.ds.next();
+        this.ds().next();
     }
 }

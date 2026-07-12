@@ -1,21 +1,8 @@
-import {
-    ChangeDetectorRef,
-    Component,
-    OnInit,
-    OnChanges,
-    SimpleChanges,
-    Inject,
-    AfterViewInit,
-    OnDestroy,
-    Input,
-    Output,
-    EventEmitter,
-    ViewChild,
-    HostListener,
-    ElementRef
-} from '@angular/core';
-import { DOCUMENT } from '@angular/common';
+import { ChangeDetectorRef, Component, OnInit, AfterViewInit, Input, HostListener, ElementRef, DOCUMENT, inject, input, output, viewChild } from '@angular/core';
+
 import { DomSanitizer } from '@angular/platform-browser';
+import { CommonModule } from '@angular/common';
+import { SliderCustomImageComponent } from '../slider-custom-image/slider-custom-image.component';
 
 const LIGHTBOX_NEXT_ARROW_CLICK_MESSAGE = 'lightbox next',	
     LIGHTBOX_PREV_ARROW_CLICK_MESSAGE = 'lightbox previous'
@@ -23,38 +10,47 @@ const LIGHTBOX_NEXT_ARROW_CLICK_MESSAGE = 'lightbox next',
 @Component({
     selector: 'slider-lightbox',
     templateUrl: './slider-lightbox.component.html',
-    standalone: false
+    imports: [CommonModule, SliderCustomImageComponent]
 })
-export class SliderLightboxComponent implements OnInit, AfterViewInit, OnDestroy {
-    totalImages: number = 0;
-    nextImageIndex: number = -1;
-    popupWidth: number = 1200;
-    marginLeft: number = 0;
-    imageFullscreenView: boolean = false;
-    lightboxPrevDisable: boolean = false;
-    lightboxNextDisable: boolean = false;
-    showLoading: boolean = false;
-    effectStyle: string = 'none';
-    speed: number = 1; // default speed in second
-    title: string = '';
-    currentImageIndex: number = 0;
+export class SliderLightboxComponent implements OnInit, AfterViewInit {
+    private cdRef = inject(ChangeDetectorRef);
+    private sanitizer = inject(DomSanitizer);
+    private elRef = inject(ElementRef);
+    private document = inject(DOCUMENT);
+
+    totalImages = 0;
+    nextImageIndex = -1;
+    popupWidth = 1200;
+    marginLeft = 0;
+    imageFullscreenView = false;
+    lightboxPrevDisable = false;
+    lightboxNextDisable = false;
+    showLoading = false;
+    effectStyle = 'none';
+    speed = 1; // default speed in second
+    title = '';
+    currentImageIndex = 0;
 
     // for swipe event
     private swipeLightboxImgCoord?: [number, number];
     private swipeLightboxImgTime?: number;
 
-    @ViewChild('lightboxDiv', { static: false }) lightboxDiv;
-    @ViewChild('lightboxImageDiv', { static: false }) lightboxImageDiv;
+    readonly lightboxDiv = viewChild('lightboxDiv');
+    readonly lightboxImageDiv = viewChild('lightboxImageDiv');
 
     // @Inputs
-    @Input() images: Array<object> = [];
+    readonly images = input<any[]>([]);
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input()
     set imageIndex(index: number) {
-        if (index !== undefined && index > -1 && index < this.images.length) {
+        if (index !== undefined && index > -1 && index < this.images().length) {
             this.currentImageIndex = index;
         }
         this.nextPrevDisable();
     }
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input()
     set show(visiableFlag: boolean) {
         this.imageFullscreenView = visiableFlag;
@@ -65,9 +61,11 @@ export class SliderLightboxComponent implements OnInit, AfterViewInit, OnDestroy
             this.setPopupSliderWidth();
         }
     }
-    @Input() videoAutoPlay: boolean = false;
-    @Input() direction: string = 'ltr';
-    @Input() paginationShow: boolean = false;
+    readonly videoAutoPlay = input<boolean>(false);
+    readonly direction = input<string>('ltr');
+    readonly paginationShow = input<boolean>(false);
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input()
     set animationSpeed(data: number) {
         if (data
@@ -77,15 +75,15 @@ export class SliderLightboxComponent implements OnInit, AfterViewInit, OnDestroy
             this.speed = data;
         }
     }
-    @Input() infinite: boolean = false;
-    @Input() arrowKeyMove: boolean = true;
-    @Input() showVideoControls: boolean = true;
-    @Input() fallbackImage: string;
+    readonly infinite = input<boolean>(false);
+    readonly arrowKeyMove = input<boolean>(true);
+    readonly showVideoControls = input<boolean>(true);
+    readonly fallbackImage = input<string>(undefined);
 
     // @Output
-    @Output() close = new EventEmitter<any>();
-    @Output() prevImage = new EventEmitter<any>();
-    @Output() nextImage = new EventEmitter<any>();
+    readonly close = output<void>();
+    readonly prevImage = output<any>();
+    readonly nextImage = output<any>();
 
     @HostListener('window:resize', ['$event'])
     onResize(event) {
@@ -94,7 +92,7 @@ export class SliderLightboxComponent implements OnInit, AfterViewInit, OnDestroy
     }
     @HostListener('document:keyup', ['$event'])
     handleKeyboardEvent(event: KeyboardEvent) {
-        if (event && event.key && this.arrowKeyMove) {
+        if (event && event.key && this.arrowKeyMove()) {
             if (event.key.toLowerCase() === 'arrowright') {
                 this.nextImageLightbox();
             }
@@ -109,26 +107,17 @@ export class SliderLightboxComponent implements OnInit, AfterViewInit, OnDestroy
         }
     }
 
-    constructor(
-        private cdRef: ChangeDetectorRef,
-        private sanitizer: DomSanitizer,
-        private elRef: ElementRef,
-        @Inject(DOCUMENT) private document: any) { }
-
     ngOnInit() {
     }
 
     ngAfterViewInit() {
     }
 
-    ngOnDestroy() {
-        this.resetState();
-    }
 
     setPopupSliderWidth() {
         if (window && window.innerWidth) {
             this.popupWidth = window.innerWidth;
-            this.totalImages = this.images.length;
+            this.totalImages = this.images().length;
             if (typeof (this.currentImageIndex) === 'number' && this.currentImageIndex !== undefined) {
                 this.marginLeft = -1 * this.popupWidth * this.currentImageIndex;
                 this.getImageData();
@@ -157,7 +146,7 @@ export class SliderLightboxComponent implements OnInit, AfterViewInit, OnDestroy
 
     nextImageLightbox() {
         this.effectStyle = `all ${this.speed}s ease-in-out`;
-        if (this.currentImageIndex < this.images.length - 1 && !this.lightboxNextDisable) {
+        if (this.currentImageIndex < this.images().length - 1 && !this.lightboxNextDisable) {
             this.currentImageIndex++;
             this.nextImage.emit(LIGHTBOX_NEXT_ARROW_CLICK_MESSAGE);
             this.marginLeft = -1 * this.popupWidth * this.currentImageIndex;
@@ -177,24 +166,26 @@ export class SliderLightboxComponent implements OnInit, AfterViewInit, OnDestroy
     applyButtonDisableCondition() {
         this.lightboxNextDisable = false;
         this.lightboxPrevDisable = false;
-        if (!this.infinite && this.currentImageIndex >= this.images.length - 1) {
+        const infinite = this.infinite();
+        if (!infinite && this.currentImageIndex >= this.images().length - 1) {
             this.lightboxNextDisable = true;
         }
-        if (!this.infinite && this.currentImageIndex <= 0) {
+        if (!infinite && this.currentImageIndex <= 0) {
             this.lightboxPrevDisable = true;
         }
         this.cdRef.detectChanges();
     }
 
     getImageData() {
-        if (this.images
-            && this.images.length
+        const images = this.images();
+        if (images
+            && images.length
             && typeof (this.currentImageIndex) === 'number'
             && this.currentImageIndex !== undefined
-            && this.images[this.currentImageIndex]
-            && (this.images[this.currentImageIndex]['image'] || this.images[this.currentImageIndex]['video'])) {
-            this.title = this.images[this.currentImageIndex]['title'] || '';
-            this.totalImages = this.images.length;
+            && images[this.currentImageIndex]
+            && (images[this.currentImageIndex]['image'] || images[this.currentImageIndex]['video'])) {
+            this.title = images[this.currentImageIndex]['title'] || '';
+            this.totalImages = images.length;
             for (const iframeI in this.document.getElementsByTagName('iframe')) {
                 if (this.document.getElementsByTagName('iframe')[iframeI]
                     && this.document.getElementsByTagName('iframe')[iframeI].contentWindow
@@ -210,9 +201,6 @@ export class SliderLightboxComponent implements OnInit, AfterViewInit, OnDestroy
         }
     }
 
-    resetState() {
-        this.images = [];
-    }
 
     /**
      * Swipe event handler

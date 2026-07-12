@@ -1,4 +1,4 @@
-import { Injectable, Inject, Optional } from "@angular/core";
+import { Injectable, inject } from "@angular/core";
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 
 const httpOptions = {
@@ -7,7 +7,8 @@ const httpOptions = {
 
 @Injectable()
 export class HeroService {
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
+
   
 data:any= 
     [

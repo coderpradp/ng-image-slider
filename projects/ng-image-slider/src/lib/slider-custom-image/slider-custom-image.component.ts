@@ -1,11 +1,6 @@
-import {
-    Component,
-    Input,
-    OnChanges,
-    SimpleChanges,
-    Inject
-} from '@angular/core';
-import { DOCUMENT } from '@angular/common';
+import { Component, OnChanges, SimpleChanges, DOCUMENT, inject, input } from '@angular/core';
+
+import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NgImageSliderService } from './../ng-image-slider.service';
 
@@ -16,50 +11,48 @@ const youtubeRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|\?v=)([
 @Component({
     selector: 'custom-img',
     templateUrl: './slider-custom-image.component.html',
-    standalone: false
+    imports: [CommonModule]
 })
 export class SliderCustomImageComponent implements OnChanges {
+    imageSliderService = inject(NgImageSliderService);
+    private sanitizer = inject(DomSanitizer);
+
     YOUTUBE = 'youtube';
     IMAGE = 'image';
     VIDEO = 'video';
     fileUrl: SafeResourceUrl = '';
     fileExtension = '';
     type = this.IMAGE;
-    imageLoading:boolean = true;
+    imageLoading = true;
 
     // @inputs
-    @Input() showVideo: boolean = false;
-    @Input() videoAutoPlay: boolean = false;
-    @Input() showVideoControls: number = 1;
-    @Input() currentImageIndex: number;
-    @Input() imageIndex: number;
-    @Input() speed: number = 1;
-    @Input() imageUrl;
-    @Input() isVideo = false;
-    @Input() alt: String = '';
-    @Input() title: String = '';
-    @Input() direction: string = 'ltr';
-    @Input() ratio: boolean = false;
-    @Input() lazy: boolean = false;
-    @Input() fallbackImage: string;
-
-    constructor(
-        public imageSliderService: NgImageSliderService,
-        private sanitizer: DomSanitizer,
-        @Inject(DOCUMENT) document) {
-    }
+    readonly showVideo = input<boolean>(false);
+    readonly videoAutoPlay = input<boolean>(false);
+    readonly showVideoControls = input<number>(1);
+    readonly currentImageIndex = input<number>(undefined);
+    readonly imageIndex = input<number>(undefined);
+    readonly speed = input<number>(1);
+    readonly imageUrl = input(undefined);
+    readonly isVideo = input(false);
+    readonly alt = input<string>('');
+    readonly title = input<string>('');
+    readonly direction = input<string>('ltr');
+    readonly ratio = input<boolean>(false);
+    readonly lazy = input<boolean>(false);
+    readonly fallbackImage = input<string>(undefined);
 
     ngOnChanges(changes: SimpleChanges) {
-      if (this.imageUrl && typeof this.imageUrl === 'string') {
+      const imageUrl = this.imageUrl();
+      if (imageUrl && typeof imageUrl === 'string') {
         const firstChange = changes.imageUrl?.firstChange ?? false;
-        if (firstChange || this.videoAutoPlay) {
+        if (firstChange || this.videoAutoPlay()) {
           this.setUrl();
         }
       }
     }
 
     setUrl() {
-      const url: string = this.imageUrl;
+      const url: string = this.imageUrl();
       this.imageLoading = true;
 
       let extension = '';
@@ -92,11 +85,11 @@ export class SliderCustomImageComponent implements OnChanges {
       const match = url.match(youtubeRegExp);
       if (match && match[2]?.length === 11) {
         const videoId = match[2];
-        if (this.showVideo) {
+        if (this.showVideo()) {
           this.type = this.YOUTUBE;
-          const autoplayParam = this.videoAutoPlay ? '1' : '0';
+          const autoplayParam = this.videoAutoPlay() ? '1' : '0';
           this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
-            `https://www.youtube.com/embed/${videoId}?autoplay=${autoplayParam}&enablejsapi=1&controls=${this.showVideoControls}`,
+            `https://www.youtube.com/embed/${videoId}?autoplay=${autoplayParam}&enablejsapi=1&controls=${this.showVideoControls()}`,
           );
         } else {
           this.type = this.IMAGE;
@@ -120,14 +113,14 @@ export class SliderCustomImageComponent implements OnChanges {
         this.type = this.VIDEO;
         this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
 
-        if (this.videoAutoPlay) {
+        if (this.videoAutoPlay()) {
           const videoElement = document.getElementById(
-            `video_${this.imageIndex}`,
+            `video_${this.imageIndex()}`,
           ) as HTMLVideoElement;
           if (videoElement) {
             setTimeout(() => {
               videoElement.play();
-            }, this.speed * 1000);
+            }, this.speed() * 1000);
           }
         }
         return;
@@ -140,7 +133,7 @@ export class SliderCustomImageComponent implements OnChanges {
     }
 
     videoClickHandler(event) {
-        if (event && event.srcElement && !this.showVideoControls) {
+        if (event && event.srcElement && !this.showVideoControls()) {
             if (event.srcElement.paused) {
                 event.srcElement.play();
             } else {
@@ -151,8 +144,9 @@ export class SliderCustomImageComponent implements OnChanges {
 
     // set fallback url if error in image load
     async errorHandler(event) {
-        if (this.fallbackImage && await this.imageSliderService.isImageExist(this.fallbackImage)) {
-            event.target.src = this.fallbackImage;
+        const fallbackImage = this.fallbackImage();
+        if (fallbackImage && await this.imageSliderService.isImageExist(fallbackImage)) {
+            event.target.src = fallbackImage;
         }
     }
 }

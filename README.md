@@ -26,9 +26,9 @@ Also support youtube and mp4 video urls.
 
 # Setup :
 
-**Import module in your `app.module.ts`:**
+**`NgImageSliderComponent` is standalone as of v20 — import it directly wherever you need it (component `imports`, or `NgModule.imports`):**
 ```typescript
-import { NgImageSliderModule } from 'ng-image-slider';
+import { NgImageSliderComponent } from '@coderpradp/ng-image-slider';
 ...
 
 @NgModule({
@@ -36,7 +36,7 @@ import { NgImageSliderModule } from 'ng-image-slider';
         AppComponent
     ],
     imports: [
-        NgImageSliderModule,
+        NgImageSliderComponent,
         ...
     ],
     providers: [],
@@ -47,6 +47,7 @@ export class AppModule {
 }
 
 ```
+> **Breaking change (v20):** `NgImageSliderModule` has been removed. Import `NgImageSliderComponent` directly instead.
 
 **Add component in your template file.**
 ```html
