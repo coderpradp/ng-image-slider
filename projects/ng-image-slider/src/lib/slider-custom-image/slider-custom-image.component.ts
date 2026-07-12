@@ -28,7 +28,6 @@ export class SliderCustomImageComponent implements OnChanges {
   IMAGE = 'image';
   VIDEO = 'video';
   fileUrl: SafeResourceUrl = '';
-  fileExtension = '';
   type = this.IMAGE;
   imageLoading = true;
 
@@ -36,7 +35,6 @@ export class SliderCustomImageComponent implements OnChanges {
   readonly showVideo = input<boolean>(false);
   readonly videoAutoPlay = input<boolean>(false);
   readonly showVideoControls = input<number>(1);
-  readonly currentImageIndex = input<number>(undefined);
   readonly imageIndex = input<number>(undefined);
   readonly speed = input<number>(1);
   readonly imageUrl = input(undefined);
@@ -86,8 +84,6 @@ export class SliderCustomImageComponent implements OnChanges {
       }
     }
 
-    this.fileExtension = extension;
-
     // Check if it's a YouTube URL
     const match = url.match(youtubeRegExp);
     if (match && match[2]?.length === 11) {
@@ -104,7 +100,6 @@ export class SliderCustomImageComponent implements OnChanges {
           `https://img.youtube.com/vi/${videoId}/0.jpg`
         );
       }
-      this.fileExtension = '';
       return;
     }
 
@@ -133,8 +128,7 @@ export class SliderCustomImageComponent implements OnChanges {
       return;
     }
 
-    // Fallback for unknown extensions: clear fileExtension and default to image
-    this.fileExtension = '';
+    // Fallback for unknown extensions: default to image
     this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl('');
     this.type = this.IMAGE;
   }

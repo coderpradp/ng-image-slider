@@ -7,10 +7,8 @@ import {
   inject,
   input,
   output,
-  viewChild,
 } from '@angular/core';
 
-import { DomSanitizer } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { SliderCustomImageComponent } from '../slider-custom-image/slider-custom-image.component';
 
@@ -28,12 +26,10 @@ const LIGHTBOX_NEXT_ARROW_CLICK_MESSAGE = 'lightbox next',
 })
 export class SliderLightboxComponent {
   private cdRef = inject(ChangeDetectorRef);
-  private sanitizer = inject(DomSanitizer);
   private elRef = inject(ElementRef);
   private document = inject(DOCUMENT);
 
   totalImages = 0;
-  nextImageIndex = -1;
   popupWidth = 1200;
   marginLeft = 0;
   imageFullscreenView = false;
@@ -48,9 +44,6 @@ export class SliderLightboxComponent {
   // for swipe event
   private swipeLightboxImgCoord?: [number, number];
   private swipeLightboxImgTime?: number;
-
-  readonly lightboxDiv = viewChild('lightboxDiv');
-  readonly lightboxImageDiv = viewChild('lightboxImageDiv');
 
   // @Inputs
   readonly images = input<any[]>([]);
@@ -85,7 +78,6 @@ export class SliderLightboxComponent {
       this.elRef.nativeElement.ownerDocument.body.style.overflow = '';
       if (visiableFlag === true) {
         this.elRef.nativeElement.ownerDocument.body.style.overflow = 'hidden';
-        // this.getImageData();
         this.setPopupSliderWidth();
       }
     });

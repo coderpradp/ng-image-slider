@@ -127,7 +127,6 @@ export class NgImageSliderComponent
             typeof data['width'] === 'string')
         ) {
           this.sliderImageReceivedWidth = data['width'];
-          // this.sliderImageSizeWithPadding = data['width'] + (this.imageMargin * 2); // addeing padding with image width
         }
         if (
           Object.prototype.hasOwnProperty.call(data, 'height') &&
@@ -255,9 +254,6 @@ export class NgImageSliderComponent
   }
 
   ngOnInit() {
-    // @TODO: for future use
-    // console.log(this._elementRef)
-
     // for slider
     if (this.infinite()) {
       this.effectStyle = 'none';
@@ -346,7 +342,6 @@ export class NgImageSliderComponent
       });
       this.ligthboxImageObj = [...this.imageObj];
       this.totalImages = this.imageObj.length;
-      // this.imageParentDivWidth = imgObj.length * this.sliderImageSizeWithPadding;
     } else {
       this.imageObj = [];
       this.ligthboxImageObj = [];
@@ -453,7 +448,6 @@ export class NgImageSliderComponent
         this.prevImg();
       }
 
-      //this.arrowClick.emit(PREV_ARROW_CLICK_MESSAGE);
       this.sliderArrowDisableTeam(PREV_ARROW_CLICK_MESSAGE);
       this.getVisiableIndex();
     }
@@ -467,7 +461,6 @@ export class NgImageSliderComponent
         this.nextImg();
       }
 
-      //this.arrowClick.emit(NEXT_ARROW_CLICK_MESSAGE);
       this.sliderArrowDisableTeam(NEXT_ARROW_CLICK_MESSAGE);
       this.getVisiableIndex();
     }
