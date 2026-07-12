@@ -1,10 +1,9 @@
 import {
   ChangeDetectorRef,
   Component,
-  Input,
-  HostListener,
   ElementRef,
   DOCUMENT,
+  effect,
   inject,
   input,
   output,
@@ -22,6 +21,10 @@ const LIGHTBOX_NEXT_ARROW_CLICK_MESSAGE = 'lightbox next',
   selector: 'lib-slider-lightbox',
   templateUrl: './slider-lightbox.component.html',
   imports: [CommonModule, SliderCustomImageComponent],
+  host: {
+    '(window:resize)': 'onResize()',
+    '(document:keyup)': 'handleKeyboardEvent($event)',
+  },
 })
 export class SliderLightboxComponent {
   private cdRef = inject(ChangeDetectorRef);
@@ -51,55 +54,54 @@ export class SliderLightboxComponent {
 
   // @Inputs
   readonly images = input<any[]>([]);
-  // TODO: Skipped for migration because:
-  //  Accessor inputs cannot be migrated as they are too complex.
-  @Input()
-  set imageIndex(index: number) {
-    if (index !== undefined && index > -1 && index < this.images().length) {
-      this.currentImageIndex = index;
-    }
-    this.nextPrevDisable();
-  }
-  // TODO: Skipped for migration because:
-  //  Accessor inputs cannot be migrated as they are too complex.
-  @Input()
-  set show(visiableFlag: boolean) {
-    this.imageFullscreenView = visiableFlag;
-    this.elRef.nativeElement.ownerDocument.body.style.overflow = '';
-    if (visiableFlag === true) {
-      this.elRef.nativeElement.ownerDocument.body.style.overflow = 'hidden';
-      // this.getImageData();
-      this.setPopupSliderWidth();
-    }
-  }
+  readonly imageIndex = input<number>();
+  readonly show = input<boolean>(false);
   readonly videoAutoPlay = input<boolean>(false);
   readonly direction = input<string>('ltr');
   readonly paginationShow = input<boolean>(false);
-  // TODO: Skipped for migration because:
-  //  Accessor inputs cannot be migrated as they are too complex.
-  @Input()
-  set animationSpeed(data: number) {
-    if (data && typeof data === 'number' && data >= 0.1 && data <= 5) {
-      this.speed = data;
-    }
-  }
+  readonly animationSpeed = input<number>();
   readonly infinite = input<boolean>(false);
   readonly arrowKeyMove = input<boolean>(true);
   readonly showVideoControls = input<boolean>(true);
   readonly fallbackImage = input<string>(undefined);
 
   // @Output
-  // Named "closed" (not close) to avoid @angular-eslint/no-output-native clashing with the native DOM "close" event.
   readonly closed = output<void>();
   readonly prevImage = output<string>();
   readonly nextImage = output<string>();
 
-  @HostListener('window:resize')
+  constructor() {
+    effect(() => {
+      const index = this.imageIndex();
+      if (index !== undefined && index > -1 && index < this.images().length) {
+        this.currentImageIndex = index;
+      }
+      this.nextPrevDisable();
+    });
+
+    effect(() => {
+      const visiableFlag = this.show();
+      this.imageFullscreenView = visiableFlag;
+      this.elRef.nativeElement.ownerDocument.body.style.overflow = '';
+      if (visiableFlag === true) {
+        this.elRef.nativeElement.ownerDocument.body.style.overflow = 'hidden';
+        // this.getImageData();
+        this.setPopupSliderWidth();
+      }
+    });
+
+    effect(() => {
+      const data = this.animationSpeed();
+      if (data && typeof data === 'number' && data >= 0.1 && data <= 5) {
+        this.speed = data;
+      }
+    });
+  }
+
   onResize() {
     this.effectStyle = 'none';
     this.setPopupSliderWidth();
   }
-  @HostListener('document:keyup', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
     if (event && event.key && this.arrowKeyMove()) {
       if (event.key.toLowerCase() === 'arrowright') {

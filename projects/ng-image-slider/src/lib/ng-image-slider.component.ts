@@ -8,11 +8,10 @@ import {
   SimpleChange,
   AfterViewInit,
   OnDestroy,
-  Input,
   ViewEncapsulation,
-  HostListener,
   PLATFORM_ID,
   ElementRef,
+  effect,
   inject,
   input,
   output,
@@ -33,6 +32,10 @@ const NEXT_ARROW_CLICK_MESSAGE = 'next',
   styleUrls: ['./ng-image-slider.component.scss'],
   encapsulation: ViewEncapsulation.None,
   imports: [CommonModule, SliderCustomImageComponent, SliderLightboxComponent],
+  host: {
+    '(window:resize)': 'onResize()',
+    '(document:keyup)': 'handleKeyboardEvent($event)',
+  },
 })
 export class NgImageSliderComponent
   implements OnChanges, OnInit, DoCheck, AfterViewInit, OnDestroy
@@ -82,131 +85,23 @@ export class NgImageSliderComponent
   readonly imageDiv = viewChild<ElementRef>('imageDiv');
 
   // @inputs
-  // TODO: Skipped for migration because:
-  //  Accessor inputs cannot be migrated as they are too complex.
-  @Input()
-  set imageSize(data) {
-    if (data && typeof data === 'object') {
-      if (
-        Object.prototype.hasOwnProperty.call(data, 'space') &&
-        typeof data['space'] === 'number' &&
-        data['space'] > -1
-      ) {
-        this.imageMargin = data['space'];
-      }
-      if (
-        Object.prototype.hasOwnProperty.call(data, 'width') &&
-        (typeof data['width'] === 'number' || typeof data['width'] === 'string')
-      ) {
-        this.sliderImageReceivedWidth = data['width'];
-        // this.sliderImageSizeWithPadding = data['width'] + (this.imageMargin * 2); // addeing padding with image width
-      }
-      if (
-        Object.prototype.hasOwnProperty.call(data, 'height') &&
-        (typeof data['height'] === 'number' ||
-          typeof data['height'] === 'string')
-      ) {
-        this.sliderImageReceivedHeight = data['height'];
-      }
-    }
-  }
+  readonly imageSize = input<any>();
   readonly infinite = input<boolean>(false);
   readonly imagePopup = input<boolean>(true);
-  // TODO: Skipped for migration because:
-  //  Accessor inputs cannot be migrated as they are too complex.
-  @Input()
-  set direction(dir: string) {
-    if (dir) {
-      this.textDirection = dir;
-    }
-  }
-  // TODO: Skipped for migration because:
-  //  Accessor inputs cannot be migrated as they are too complex.
-  @Input()
-  set animationSpeed(data: number) {
-    if (data && typeof data === 'number' && data >= 0.1 && data <= 5) {
-      this.speed = data;
-      this.effectStyle = `all ${this.speed}s ease-in-out`;
-    }
-  }
+  readonly direction = input<string>();
+  readonly animationSpeed = input<number>();
   readonly images = input<any[]>([]);
-  // TODO: Skipped for migration because:
-  //  Accessor inputs cannot be migrated as they are too complex.
-  @Input() set fallbackImage(images: object) {
-    if (images) {
-      if (Object.prototype.hasOwnProperty.call(images, 'image')) {
-        this.fallbackMainImage = images['image'];
-      }
-      if (Object.prototype.hasOwnProperty.call(images, 'thumbImage')) {
-        this.fallbackThumbImage = images['thumbImage'];
-      }
-    }
-  }
-  // TODO: Skipped for migration because:
-  //  Accessor inputs cannot be migrated as they are too complex.
-  @Input() set slideImage(count) {
-    if (count && typeof count === 'number') {
-      this.slideImageCount = Math.round(count);
-    }
-  }
-  // TODO: Skipped for migration because:
-  //  Accessor inputs cannot be migrated as they are too complex.
-  @Input() set autoSlide(count: any) {
-    if (
-      count &&
-      (typeof count === 'number' ||
-        typeof count === 'boolean' ||
-        typeof count === 'object')
-    ) {
-      if (typeof count === 'number' && count >= 1 && count <= 5) {
-        count = Math.round(count);
-      } else if (typeof count === 'boolean') {
-        count = 1;
-      } else if (
-        typeof count === 'object' &&
-        Object.prototype.hasOwnProperty.call(count, 'interval') &&
-        Math.round(count['interval']) &&
-        Math.round(count['interval']) >= 1 &&
-        Math.round(count['interval']) <= 5
-      ) {
-        this.stopSlideOnHover = Object.prototype.hasOwnProperty.call(
-          count,
-          'stopOnHover'
-        )
-          ? count['stopOnHover']
-          : true;
-        count = Math.round(count['interval']);
-      }
-      this.autoSlideCount = count * 1000;
-    }
-  }
-  // TODO: Skipped for migration because:
-  //  Accessor inputs cannot be migrated as they are too complex.
-  @Input() set showArrow(flag) {
-    if (flag !== undefined && typeof flag === 'boolean') {
-      this.showArrowButton = flag;
-    }
-  }
-
-  // TODO: Skipped for migration because:
-  //  Accessor inputs cannot be migrated as they are too complex.
-  @Input() set orderType(data: string) {
-    if (data !== undefined && typeof data === 'string') {
-      this.sliderOrderType = data.toUpperCase();
-    }
-  }
+  readonly fallbackImage = input<any>();
+  readonly slideImage = input<number>();
+  readonly autoSlide = input<any>();
+  readonly showArrow = input<boolean>();
+  readonly orderType = input<string>();
   readonly videoAutoPlay = input<boolean>(false);
   readonly paginationShow = input<boolean>(false);
   readonly arrowKeyMove = input<boolean>(true);
   readonly manageImageRatio = input<boolean>(false);
   readonly showVideoControls = input<boolean>(true);
-  // TODO: Skipped for migration because:
-  //  Accessor inputs cannot be migrated as they are too complex.
-  @Input() set defaultActiveImage(activeIndex: number) {
-    if (typeof activeIndex === 'number' && activeIndex > -1) {
-      this.activeImageIndex = activeIndex;
-    }
-  }
+  readonly defaultActiveImage = input<number>();
   readonly lazyLoading = input<boolean>(false);
 
   // @Outputs
@@ -215,11 +110,125 @@ export class NgImageSliderComponent
   readonly lightboxArrowClick = output<object>();
   readonly lightboxClose = output<void>();
 
-  @HostListener('window:resize')
+  constructor() {
+    effect(() => {
+      const data = this.imageSize();
+      if (data && typeof data === 'object') {
+        if (
+          Object.prototype.hasOwnProperty.call(data, 'space') &&
+          typeof data['space'] === 'number' &&
+          data['space'] > -1
+        ) {
+          this.imageMargin = data['space'];
+        }
+        if (
+          Object.prototype.hasOwnProperty.call(data, 'width') &&
+          (typeof data['width'] === 'number' ||
+            typeof data['width'] === 'string')
+        ) {
+          this.sliderImageReceivedWidth = data['width'];
+          // this.sliderImageSizeWithPadding = data['width'] + (this.imageMargin * 2); // addeing padding with image width
+        }
+        if (
+          Object.prototype.hasOwnProperty.call(data, 'height') &&
+          (typeof data['height'] === 'number' ||
+            typeof data['height'] === 'string')
+        ) {
+          this.sliderImageReceivedHeight = data['height'];
+        }
+      }
+    });
+
+    effect(() => {
+      const dir = this.direction();
+      if (dir) {
+        this.textDirection = dir;
+      }
+    });
+
+    effect(() => {
+      const data = this.animationSpeed();
+      if (data && typeof data === 'number' && data >= 0.1 && data <= 5) {
+        this.speed = data;
+        this.effectStyle = `all ${this.speed}s ease-in-out`;
+      }
+    });
+
+    effect(() => {
+      const images = this.fallbackImage();
+      if (images) {
+        if (Object.prototype.hasOwnProperty.call(images, 'image')) {
+          this.fallbackMainImage = images['image'];
+        }
+        if (Object.prototype.hasOwnProperty.call(images, 'thumbImage')) {
+          this.fallbackThumbImage = images['thumbImage'];
+        }
+      }
+    });
+
+    effect(() => {
+      const count = this.slideImage();
+      if (count && typeof count === 'number') {
+        this.slideImageCount = Math.round(count);
+      }
+    });
+
+    effect(() => {
+      let count = this.autoSlide();
+      if (
+        count &&
+        (typeof count === 'number' ||
+          typeof count === 'boolean' ||
+          typeof count === 'object')
+      ) {
+        if (typeof count === 'number' && count >= 1 && count <= 5) {
+          count = Math.round(count);
+        } else if (typeof count === 'boolean') {
+          count = 1;
+        } else if (
+          typeof count === 'object' &&
+          Object.prototype.hasOwnProperty.call(count, 'interval') &&
+          Math.round(count['interval']) &&
+          Math.round(count['interval']) >= 1 &&
+          Math.round(count['interval']) <= 5
+        ) {
+          this.stopSlideOnHover = Object.prototype.hasOwnProperty.call(
+            count,
+            'stopOnHover'
+          )
+            ? count['stopOnHover']
+            : true;
+          count = Math.round(count['interval']);
+        }
+        this.autoSlideCount = count * 1000;
+      }
+    });
+
+    effect(() => {
+      const flag = this.showArrow();
+      if (flag !== undefined && typeof flag === 'boolean') {
+        this.showArrowButton = flag;
+      }
+    });
+
+    effect(() => {
+      const data = this.orderType();
+      if (data !== undefined && typeof data === 'string') {
+        this.sliderOrderType = data.toUpperCase();
+      }
+    });
+
+    effect(() => {
+      const activeIndex = this.defaultActiveImage();
+      if (typeof activeIndex === 'number' && activeIndex > -1) {
+        this.activeImageIndex = activeIndex;
+      }
+    });
+  }
+
   onResize() {
     this.setSliderWidth();
   }
-  @HostListener('document:keyup', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
     if (event && event.key) {
       const arrowKeyMove = this.arrowKeyMove();
