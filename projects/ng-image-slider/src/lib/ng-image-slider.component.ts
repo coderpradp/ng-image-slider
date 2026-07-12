@@ -1,524 +1,627 @@
-import { ChangeDetectorRef, Component, OnInit, OnChanges, DoCheck, SimpleChanges, SimpleChange, AfterViewInit, OnDestroy, Input, ViewEncapsulation, HostListener, PLATFORM_ID, ElementRef, inject, input, output, viewChild } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+  OnChanges,
+  DoCheck,
+  SimpleChanges,
+  SimpleChange,
+  AfterViewInit,
+  OnDestroy,
+  Input,
+  ViewEncapsulation,
+  HostListener,
+  PLATFORM_ID,
+  ElementRef,
+  inject,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
 
-import { CommonModule, isPlatformBrowser, isPlatformServer } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { NgImageSliderService } from './ng-image-slider.service';
 import { SliderCustomImageComponent } from './slider-custom-image/slider-custom-image.component';
 import { SliderLightboxComponent } from './slider-lightbox/slider-lightbox.component';
 
 const NEXT_ARROW_CLICK_MESSAGE = 'next',
-    PREV_ARROW_CLICK_MESSAGE = 'previous';
+  PREV_ARROW_CLICK_MESSAGE = 'previous';
 
 @Component({
-    selector: 'ng-image-slider',
-    templateUrl: './ng-image-slider.component.html',
-    styleUrls: ['./ng-image-slider.component.scss'],
-    encapsulation: ViewEncapsulation.None,
-    imports: [CommonModule, SliderCustomImageComponent, SliderLightboxComponent]
+  selector: 'ng-image-slider',
+  templateUrl: './ng-image-slider.component.html',
+  styleUrls: ['./ng-image-slider.component.scss'],
+  encapsulation: ViewEncapsulation.None,
+  imports: [CommonModule, SliderCustomImageComponent, SliderLightboxComponent],
 })
-export class NgImageSliderComponent implements OnChanges, OnInit, DoCheck, AfterViewInit, OnDestroy {
-    private cdRef = inject(ChangeDetectorRef);
-    private platformId = inject<object>(PLATFORM_ID);
-    imageSliderService = inject(NgImageSliderService);
-    private elRef = inject(ElementRef);
+export class NgImageSliderComponent
+  implements OnChanges, OnInit, DoCheck, AfterViewInit, OnDestroy
+{
+  private cdRef = inject(ChangeDetectorRef);
+  private platformId = inject<object>(PLATFORM_ID);
+  imageSliderService = inject(NgImageSliderService);
+  private elRef = inject(ElementRef);
+
+  // for slider
+  sliderMainDivWidth = 0;
+  imageParentDivWidth = 0;
+  imageObj: any[] = [];
+  ligthboxImageObj: any[] = [];
+  totalImages = 0;
+  leftPos = 0;
+  effectStyle = 'all 1s ease-in-out';
+  speed = 1; // default speed in second
+  sliderPrevDisable = false;
+  sliderNextDisable = false;
+  slideImageCount = 1;
+  sliderImageWidth = 205;
+  sliderImageReceivedWidth: number | string = 205;
+  sliderImageHeight = 200;
+  sliderImageReceivedHeight: number | string = 205;
+  sliderImageSizeWithPadding = 211;
+  autoSlideCount = 0;
+  stopSlideOnHover = true;
+  autoSlideInterval;
+  showArrowButton = true;
+  textDirection = 'ltr';
+  imageMargin = 3;
+  sliderOrderType = 'ASC';
+  fallbackMainImage: string;
+  fallbackThumbImage: string;
+
+  // for swipe event
+  private swipeCoord?: [number, number];
+  private swipeTime?: number;
+
+  // for lightbox
+  ligthboxShow = false;
+  activeImageIndex = -1;
+  visiableImageIndex = 0;
+
+  readonly sliderMain = viewChild<ElementRef>('sliderMain');
+  readonly imageDiv = viewChild<ElementRef>('imageDiv');
+
+  // @inputs
+  // TODO: Skipped for migration because:
+  //  Accessor inputs cannot be migrated as they are too complex.
+  @Input()
+  set imageSize(data) {
+    if (data && typeof data === 'object') {
+      if (
+        Object.prototype.hasOwnProperty.call(data, 'space') &&
+        typeof data['space'] === 'number' &&
+        data['space'] > -1
+      ) {
+        this.imageMargin = data['space'];
+      }
+      if (
+        Object.prototype.hasOwnProperty.call(data, 'width') &&
+        (typeof data['width'] === 'number' || typeof data['width'] === 'string')
+      ) {
+        this.sliderImageReceivedWidth = data['width'];
+        // this.sliderImageSizeWithPadding = data['width'] + (this.imageMargin * 2); // addeing padding with image width
+      }
+      if (
+        Object.prototype.hasOwnProperty.call(data, 'height') &&
+        (typeof data['height'] === 'number' ||
+          typeof data['height'] === 'string')
+      ) {
+        this.sliderImageReceivedHeight = data['height'];
+      }
+    }
+  }
+  readonly infinite = input<boolean>(false);
+  readonly imagePopup = input<boolean>(true);
+  // TODO: Skipped for migration because:
+  //  Accessor inputs cannot be migrated as they are too complex.
+  @Input()
+  set direction(dir: string) {
+    if (dir) {
+      this.textDirection = dir;
+    }
+  }
+  // TODO: Skipped for migration because:
+  //  Accessor inputs cannot be migrated as they are too complex.
+  @Input()
+  set animationSpeed(data: number) {
+    if (data && typeof data === 'number' && data >= 0.1 && data <= 5) {
+      this.speed = data;
+      this.effectStyle = `all ${this.speed}s ease-in-out`;
+    }
+  }
+  readonly images = input<any[]>([]);
+  // TODO: Skipped for migration because:
+  //  Accessor inputs cannot be migrated as they are too complex.
+  @Input() set fallbackImage(images: object) {
+    if (images) {
+      if (Object.prototype.hasOwnProperty.call(images, 'image')) {
+        this.fallbackMainImage = images['image'];
+      }
+      if (Object.prototype.hasOwnProperty.call(images, 'thumbImage')) {
+        this.fallbackThumbImage = images['thumbImage'];
+      }
+    }
+  }
+  // TODO: Skipped for migration because:
+  //  Accessor inputs cannot be migrated as they are too complex.
+  @Input() set slideImage(count) {
+    if (count && typeof count === 'number') {
+      this.slideImageCount = Math.round(count);
+    }
+  }
+  // TODO: Skipped for migration because:
+  //  Accessor inputs cannot be migrated as they are too complex.
+  @Input() set autoSlide(count: any) {
+    if (
+      count &&
+      (typeof count === 'number' ||
+        typeof count === 'boolean' ||
+        typeof count === 'object')
+    ) {
+      if (typeof count === 'number' && count >= 1 && count <= 5) {
+        count = Math.round(count);
+      } else if (typeof count === 'boolean') {
+        count = 1;
+      } else if (
+        typeof count === 'object' &&
+        Object.prototype.hasOwnProperty.call(count, 'interval') &&
+        Math.round(count['interval']) &&
+        Math.round(count['interval']) >= 1 &&
+        Math.round(count['interval']) <= 5
+      ) {
+        this.stopSlideOnHover = Object.prototype.hasOwnProperty.call(
+          count,
+          'stopOnHover'
+        )
+          ? count['stopOnHover']
+          : true;
+        count = Math.round(count['interval']);
+      }
+      this.autoSlideCount = count * 1000;
+    }
+  }
+  // TODO: Skipped for migration because:
+  //  Accessor inputs cannot be migrated as they are too complex.
+  @Input() set showArrow(flag) {
+    if (flag !== undefined && typeof flag === 'boolean') {
+      this.showArrowButton = flag;
+    }
+  }
+
+  // TODO: Skipped for migration because:
+  //  Accessor inputs cannot be migrated as they are too complex.
+  @Input() set orderType(data: string) {
+    if (data !== undefined && typeof data === 'string') {
+      this.sliderOrderType = data.toUpperCase();
+    }
+  }
+  readonly videoAutoPlay = input<boolean>(false);
+  readonly paginationShow = input<boolean>(false);
+  readonly arrowKeyMove = input<boolean>(true);
+  readonly manageImageRatio = input<boolean>(false);
+  readonly showVideoControls = input<boolean>(true);
+  // TODO: Skipped for migration because:
+  //  Accessor inputs cannot be migrated as they are too complex.
+  @Input() set defaultActiveImage(activeIndex: number) {
+    if (typeof activeIndex === 'number' && activeIndex > -1) {
+      this.activeImageIndex = activeIndex;
+    }
+  }
+  readonly lazyLoading = input<boolean>(false);
+
+  // @Outputs
+  readonly imageClick = output<number>();
+  readonly arrowClick = output<object>();
+  readonly lightboxArrowClick = output<object>();
+  readonly lightboxClose = output<void>();
+
+  @HostListener('window:resize')
+  onResize() {
+    this.setSliderWidth();
+  }
+  @HostListener('document:keyup', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    if (event && event.key) {
+      const arrowKeyMove = this.arrowKeyMove();
+      if (
+        event.key.toLowerCase() === 'arrowright' &&
+        !this.ligthboxShow &&
+        arrowKeyMove
+      ) {
+        this.next();
+      }
+
+      if (
+        event.key.toLowerCase() === 'arrowleft' &&
+        !this.ligthboxShow &&
+        arrowKeyMove
+      ) {
+        this.prev();
+      }
+
+      if (event.key.toLowerCase() === 'escape' && this.ligthboxShow) {
+        this.close();
+      }
+    }
+  }
+
+  ngOnInit() {
+    // @TODO: for future use
+    // console.log(this._elementRef)
 
     // for slider
-    sliderMainDivWidth = 0;
-    imageParentDivWidth = 0;
-    imageObj: any[] = [];
-    ligthboxImageObj: any[] = [];
-    totalImages = 0;
-    leftPos = 0;
-    effectStyle = 'all 1s ease-in-out';
-    speed = 1; // default speed in second
-    sliderPrevDisable = false;
-    sliderNextDisable = false;
-    slideImageCount = 1;
-    sliderImageWidth = 205;
-    sliderImageReceivedWidth: number | string = 205;
-    sliderImageHeight = 200;
-    sliderImageReceivedHeight: number | string = 205;
-    sliderImageSizeWithPadding = 211;
-    autoSlideCount = 0;
-    stopSlideOnHover = true;
-    autoSlideInterval;
-    showArrowButton = true;
-    textDirection = 'ltr';
-    imageMargin = 3;
-    sliderOrderType ='ASC';
-    fallbackMainImage: string;
-    fallbackThumbImage: string;
+    if (this.infinite()) {
+      this.effectStyle = 'none';
+      this.leftPos =
+        -1 * this.sliderImageSizeWithPadding * this.slideImageCount;
+      for (let i = 1; i <= this.slideImageCount; i++) {
+        this.imageObj.unshift(this.imageObj[this.imageObj.length - i]);
+      }
+    }
+  }
 
-    // for swipe event
-    private swipeCoord?: [number, number];
-    private swipeTime?: number;
+  // for slider
+  ngAfterViewInit() {
+    this.setSliderWidth();
+    this.cdRef.detectChanges();
+    if (isPlatformBrowser(this.platformId)) {
+      this.imageAutoSlide();
+    }
+  }
 
-    // for lightbox
-    ligthboxShow = false;
-    activeImageIndex = -1;
-    visiableImageIndex = 0;
+  ngOnDestroy() {
+    if (this.autoSlideInterval) {
+      clearInterval(this.autoSlideInterval);
+    }
+    if (this.ligthboxShow === true) {
+      this.close();
+    }
+  }
 
-    readonly sliderMain = viewChild<ElementRef>('sliderMain');
-    readonly imageDiv = viewChild<ElementRef>('imageDiv');
-
-    // @inputs
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input()
-    set imageSize(data) {
-        if (data
-            && typeof (data) === 'object') {
-            if (data.hasOwnProperty('space') && typeof (data['space']) === 'number' && data['space'] > -1) {
-                this.imageMargin = data['space'];
-            }
-            if (data.hasOwnProperty('width') && (typeof (data['width']) === 'number' || typeof (data['width']) === 'string')) {
-                this.sliderImageReceivedWidth = data['width'];
-                // this.sliderImageSizeWithPadding = data['width'] + (this.imageMargin * 2); // addeing padding with image width
-            }
-            if (data.hasOwnProperty('height') && (typeof (data['height']) === 'number' || typeof (data['height']) === 'string')) {
-                this.sliderImageReceivedHeight = data['height'];
-            }
-        }
+  ngOnChanges(changes: SimpleChanges) {
+    if (
+      changes.images &&
+      Object.prototype.hasOwnProperty.call(changes.images, 'previousValue') &&
+      Object.prototype.hasOwnProperty.call(changes.images, 'currentValue') &&
+      changes.images.previousValue != changes.images.currentValue
+    ) {
+      this.setSliderImages(changes.images.currentValue);
     }
-    readonly infinite = input<boolean>(false);
-    readonly imagePopup = input<boolean>(true);
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input()
-    set direction(dir: string) {
-        if (dir) {
-            this.textDirection = dir;
-        }
-    }
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input()
-    set animationSpeed(data: number) {
-        if (data
-            && typeof (data) === 'number'
-            && data >= 0.1
-            && data <= 5) {
-            this.speed = data;
-            this.effectStyle = `all ${this.speed}s ease-in-out`;
-        }
-    }
-    readonly images = input<any[]>([]);
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input() set fallbackImage(images: object) {
-        if (images) {
-            if (images.hasOwnProperty('image')) {
-                this.fallbackMainImage = images['image'];
-            }
-            if (images.hasOwnProperty('thumbImage')) {
-                this.fallbackThumbImage = images['thumbImage'];
-            }
-        }
-    }
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input() set slideImage(count) {
-        if (count && typeof count === 'number') {
-            this.slideImageCount = Math.round(count);
-        }
-    }
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input() set autoSlide(count: any) {
-        if (count && (typeof count === 'number'
-            || typeof count === 'boolean'
-            || typeof count === 'object')) {
-            if (typeof count === 'number' && count >= 1 && count <= 5) {
-                count = Math.round(count);
-            } else if (typeof count === 'boolean') {
-                count = 1;
-            } else if (typeof count === 'object'
-                && count.hasOwnProperty('interval')
-                && Math.round(count['interval'])
-                && Math.round(count['interval']) >= 1
-                && Math.round(count['interval']) <= 5) {
-                this.stopSlideOnHover = count.hasOwnProperty('stopOnHover') ? count['stopOnHover'] : true;
-                count = Math.round(count['interval']);
-            }
-            this.autoSlideCount = count * 1000;
-        }
-    }
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input() set showArrow(flag) {
-        if (flag !== undefined && typeof flag === 'boolean') {
-            this.showArrowButton = flag;
-        }
-    }
-
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input() set orderType(data:string){
-        if (data !== undefined && typeof data === 'string') {
-            this.sliderOrderType = data.toUpperCase();
-        }
-    }
-    readonly videoAutoPlay = input<boolean>(false);
-    readonly paginationShow = input<boolean>(false);
-    readonly arrowKeyMove = input<boolean>(true);
-    readonly manageImageRatio = input<boolean>(false);
-    readonly showVideoControls = input<boolean>(true);
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input() set defaultActiveImage(activeIndex: number) {
-        if (typeof activeIndex === 'number' && activeIndex > -1) {
-            this.activeImageIndex = activeIndex;
-        }
-    }
-    readonly lazyLoading = input<boolean>(false);
-
-    // @Outputs
-    readonly imageClick = output<number>();
-    readonly arrowClick = output<object>();
-    readonly lightboxArrowClick = output<object>();
-    readonly lightboxClose = output<void>();
-
-    @HostListener('window:resize', ['$event'])
-    onResize(event) {
+    if (changes && changes.imageSize) {
+      const size: SimpleChange = changes.imageSize;
+      if (
+        size &&
+        size.previousValue &&
+        size.currentValue &&
+        size.previousValue.width &&
+        size.previousValue.height &&
+        size.currentValue.width &&
+        size.currentValue.height &&
+        (size.previousValue.width !== size.currentValue.width ||
+          size.previousValue.height !== size.currentValue.height)
+      ) {
         this.setSliderWidth();
+      }
     }
-    @HostListener('document:keyup', ['$event'])
-    handleKeyboardEvent(event: KeyboardEvent) {
-        if (event && event.key) {
-            const arrowKeyMove = this.arrowKeyMove();
-            if (event.key.toLowerCase() === 'arrowright' && !this.ligthboxShow && arrowKeyMove) {
-                this.next();
-            }
+  }
 
-            if (event.key.toLowerCase() === 'arrowleft' && !this.ligthboxShow && arrowKeyMove) {
-                this.prev();
-            }
-
-            if (event.key.toLowerCase() === 'escape' && this.ligthboxShow) {
-                this.close();
-            }
-        }
+  ngDoCheck() {
+    const images = this.images();
+    if (
+      images &&
+      this.ligthboxImageObj &&
+      images.length !== this.ligthboxImageObj.length
+    ) {
+      this.setSliderImages(images);
     }
+  }
 
-    ngOnInit() {
-        // @TODO: for future use
-        // console.log(this._elementRef)
+  setSliderImages(imgObj) {
+    if (imgObj && imgObj instanceof Array && imgObj.length) {
+      const sliderOrderEnable = imgObj.find((img) => {
+        if (Object.prototype.hasOwnProperty.call(img, 'order')) {
+          return true;
+        }
+      });
 
-        // for slider
-        if (this.infinite()) {
-            this.effectStyle = 'none';
-            this.leftPos = -1 * this.sliderImageSizeWithPadding * this.slideImageCount;
-            for (let i = 1; i <= this.slideImageCount; i++) {
-                this.imageObj.unshift(this.imageObj[this.imageObj.length - i]);
-            }
-        }
-    }
+      if (sliderOrderEnable) {
+        imgObj = this.imageSliderService.orderArray(
+          imgObj,
+          this.sliderOrderType.toUpperCase()
+        );
+      }
 
-    // for slider
-    ngAfterViewInit() {
-        this.setSliderWidth();
-        this.cdRef.detectChanges();
-        if (isPlatformBrowser(this.platformId)) {
-            this.imageAutoSlide();
-        }
-    }
-
-    ngOnDestroy() {
-        if (this.autoSlideInterval) {
-            clearInterval(this.autoSlideInterval);
-        }
-        if (this.ligthboxShow === true) {
-            this.close();
-        }
+      this.imageObj = imgObj.map((img, index) => {
+        img['index'] = index;
+        return img;
+      });
+      this.ligthboxImageObj = [...this.imageObj];
+      this.totalImages = this.imageObj.length;
+      // this.imageParentDivWidth = imgObj.length * this.sliderImageSizeWithPadding;
+    } else {
+      this.imageObj = [];
+      this.ligthboxImageObj = [];
+      this.totalImages = 0;
+      this.imageParentDivWidth = 0;
+      this.activeImageIndex = 0;
     }
 
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.images
-            && changes.images.hasOwnProperty('previousValue')
-            && changes.images.hasOwnProperty('currentValue')
-            && changes.images.previousValue != changes.images.currentValue) {
-            this.setSliderImages(changes.images.currentValue);
-        }
-        if (changes && changes.imageSize) {
-            const size: SimpleChange = changes.imageSize;
-            if (size
-                && size.previousValue
-                && size.currentValue
-                && size.previousValue.width && size.previousValue.height
-                && size.currentValue.width && size.currentValue.height
-                && (size.previousValue.width !== size.currentValue.width
-                    || size.previousValue.height !== size.currentValue.height)) {
-                this.setSliderWidth();
-            }
-        }
+    this.setSliderWidth();
+  }
+
+  setSliderWidth() {
+    const sliderMain = this.sliderMain();
+    if (
+      sliderMain &&
+      sliderMain.nativeElement &&
+      sliderMain.nativeElement.offsetWidth
+    ) {
+      this.sliderMainDivWidth = sliderMain.nativeElement.offsetWidth;
     }
 
-    ngDoCheck() {
-        const images = this.images();
-        if (images
-            && this.ligthboxImageObj
-            && images.length !== this.ligthboxImageObj.length) {
-            this.setSliderImages(images);
+    if (this.sliderMainDivWidth && this.sliderImageReceivedWidth) {
+      if (typeof this.sliderImageReceivedWidth === 'number') {
+        this.sliderImageWidth = this.sliderImageReceivedWidth;
+      } else if (typeof this.sliderImageReceivedWidth === 'string') {
+        if (this.sliderImageReceivedWidth.indexOf('px') >= 0) {
+          this.sliderImageWidth = parseFloat(this.sliderImageReceivedWidth);
+        } else if (this.sliderImageReceivedWidth.indexOf('%') >= 0) {
+          this.sliderImageWidth = +(
+            (this.sliderMainDivWidth *
+              parseFloat(this.sliderImageReceivedWidth)) /
+            100
+          ).toFixed(2);
+        } else if (parseFloat(this.sliderImageReceivedWidth)) {
+          this.sliderImageWidth = parseFloat(this.sliderImageReceivedWidth);
         }
+      }
     }
-
-    setSliderImages(imgObj) {
-        if (imgObj && imgObj instanceof Array && imgObj.length) {
-            const sliderOrderEnable = imgObj.find((img) => {
-                if (img.hasOwnProperty('order')) {
-                    return true
-                }
-            });
-
-            if(sliderOrderEnable){
-                imgObj = this.imageSliderService.orderArray(imgObj, this.sliderOrderType.toUpperCase());
-            }
-
-            this.imageObj = imgObj.map((img, index) => {
-                img['index'] = index;
-                return img;
-            });
-            this.ligthboxImageObj = [...this.imageObj];
-            this.totalImages = this.imageObj.length;
-            // this.imageParentDivWidth = imgObj.length * this.sliderImageSizeWithPadding;
-        } else {
-            this.imageObj = [];
-            this.ligthboxImageObj = [];
-            this.totalImages = 0;
-            this.imageParentDivWidth = 0;
-            this.activeImageIndex = 0;
+    if (isPlatformBrowser(this.platformId)) {
+      if (window && window.innerHeight && this.sliderImageReceivedHeight) {
+        if (typeof this.sliderImageReceivedHeight === 'number') {
+          this.sliderImageHeight = this.sliderImageReceivedHeight;
+        } else if (typeof this.sliderImageReceivedHeight === 'string') {
+          if (this.sliderImageReceivedHeight.indexOf('px') >= 0) {
+            this.sliderImageHeight = parseFloat(this.sliderImageReceivedHeight);
+          } else if (this.sliderImageReceivedHeight.indexOf('%') >= 0) {
+            this.sliderImageHeight = +(
+              (window.innerHeight *
+                parseFloat(this.sliderImageReceivedHeight)) /
+              100
+            ).toFixed(2);
+          } else if (parseFloat(this.sliderImageReceivedHeight)) {
+            this.sliderImageHeight = parseFloat(this.sliderImageReceivedHeight);
+          }
         }
-
-        this.setSliderWidth();
+      }
     }
-
-    setSliderWidth() {
-        const sliderMain = this.sliderMain();
-        if (sliderMain
-            && sliderMain.nativeElement
-            && sliderMain.nativeElement.offsetWidth) {
-            this.sliderMainDivWidth = sliderMain.nativeElement.offsetWidth;
-        }
-
-        if (this.sliderMainDivWidth
-            && this.sliderImageReceivedWidth) {
-            if (typeof this.sliderImageReceivedWidth === 'number') {
-                this.sliderImageWidth = this.sliderImageReceivedWidth;
-            } else if (typeof this.sliderImageReceivedWidth === 'string') {
-                if (this.sliderImageReceivedWidth.indexOf('px') >= 0) {
-                    this.sliderImageWidth = parseFloat(this.sliderImageReceivedWidth);
-                } else if (this.sliderImageReceivedWidth.indexOf('%') >= 0) {
-                    this.sliderImageWidth = +((this.sliderMainDivWidth * parseFloat(this.sliderImageReceivedWidth)) / 100).toFixed(2);
-                } else if (parseFloat(this.sliderImageReceivedWidth)) {
-                    this.sliderImageWidth = parseFloat(this.sliderImageReceivedWidth);
-                }
-            }
-        }
-        if (isPlatformBrowser(this.platformId)) {
-            if (window && window.innerHeight
-                && this.sliderImageReceivedHeight) {
-                if (typeof this.sliderImageReceivedHeight === 'number') {
-                    this.sliderImageHeight = this.sliderImageReceivedHeight;
-                } else if (typeof this.sliderImageReceivedHeight === 'string') {
-                    if (this.sliderImageReceivedHeight.indexOf('px') >= 0) {
-                        this.sliderImageHeight = parseFloat(this.sliderImageReceivedHeight);
-                    } else if (this.sliderImageReceivedHeight.indexOf('%') >= 0) {
-                        this.sliderImageHeight = +((window.innerHeight * parseFloat(this.sliderImageReceivedHeight)) / 100).toFixed(2);
-                    } else if (parseFloat(this.sliderImageReceivedHeight)) {
-                        this.sliderImageHeight = parseFloat(this.sliderImageReceivedHeight);
-                    }
-                }
-            }
-        }
-        this.sliderImageSizeWithPadding = this.sliderImageWidth + (this.imageMargin * 2);
-        this.imageParentDivWidth = this.imageObj.length * this.sliderImageSizeWithPadding;
-        const imageDiv = this.imageDiv();
-        if (imageDiv && imageDiv.nativeElement && imageDiv.nativeElement.offsetWidth) {
-            const staticLeftPos = 0-((this.sliderImageSizeWithPadding * this.visiableImageIndex))
-            this.leftPos = this.infinite() ? -1 * this.sliderImageSizeWithPadding * this.slideImageCount : staticLeftPos;
-        }
-        this.nextPrevSliderButtonDisable();
+    this.sliderImageSizeWithPadding =
+      this.sliderImageWidth + this.imageMargin * 2;
+    this.imageParentDivWidth =
+      this.imageObj.length * this.sliderImageSizeWithPadding;
+    const imageDiv = this.imageDiv();
+    if (
+      imageDiv &&
+      imageDiv.nativeElement &&
+      imageDiv.nativeElement.offsetWidth
+    ) {
+      const staticLeftPos =
+        0 - this.sliderImageSizeWithPadding * this.visiableImageIndex;
+      this.leftPos = this.infinite()
+        ? -1 * this.sliderImageSizeWithPadding * this.slideImageCount
+        : staticLeftPos;
     }
+    this.nextPrevSliderButtonDisable();
+  }
 
-    imageOnClick(index) {
-        this.activeImageIndex = index;
-        if (this.imagePopup()) {
-            this.showLightbox();
-        }
-        this.imageClick.emit(index);
+  imageOnClick(index) {
+    this.activeImageIndex = index;
+    if (this.imagePopup()) {
+      this.showLightbox();
     }
+    this.imageClick.emit(index);
+  }
 
-    imageAutoSlide() {
-        if (this.infinite() && this.autoSlideCount && !this.ligthboxShow) {
-            this.autoSlideInterval = setInterval(() => {
-                this.next();
-            }, this.autoSlideCount);
-        }
+  imageAutoSlide() {
+    if (this.infinite() && this.autoSlideCount && !this.ligthboxShow) {
+      this.autoSlideInterval = setInterval(() => {
+        this.next();
+      }, this.autoSlideCount);
     }
+  }
 
-    imageMouseEnterHandler() {
-        if (this.infinite() && this.autoSlideCount && this.autoSlideInterval) {
-            clearInterval(this.autoSlideInterval);
-        }
+  imageMouseEnterHandler() {
+    if (this.infinite() && this.autoSlideCount && this.autoSlideInterval) {
+      clearInterval(this.autoSlideInterval);
     }
+  }
 
-    prev() {
-        if (!this.sliderPrevDisable) {
-            if (this.infinite()) {
-                this.infinitePrevImg();
-            } else {
-                this.prevImg();
-            }
+  prev() {
+    if (!this.sliderPrevDisable) {
+      if (this.infinite()) {
+        this.infinitePrevImg();
+      } else {
+        this.prevImg();
+      }
 
-            //this.arrowClick.emit(PREV_ARROW_CLICK_MESSAGE);
-            this.sliderArrowDisableTeam(PREV_ARROW_CLICK_MESSAGE);
-            this.getVisiableIndex();
-        }
+      //this.arrowClick.emit(PREV_ARROW_CLICK_MESSAGE);
+      this.sliderArrowDisableTeam(PREV_ARROW_CLICK_MESSAGE);
+      this.getVisiableIndex();
     }
+  }
 
-    next() {
-        if (!this.sliderNextDisable) {
-            if (this.infinite()) {
-                this.infiniteNextImg();
-            } else {
-                this.nextImg();
-            }
+  next() {
+    if (!this.sliderNextDisable) {
+      if (this.infinite()) {
+        this.infiniteNextImg();
+      } else {
+        this.nextImg();
+      }
 
-            //this.arrowClick.emit(NEXT_ARROW_CLICK_MESSAGE);
-            this.sliderArrowDisableTeam(NEXT_ARROW_CLICK_MESSAGE);
-            this.getVisiableIndex();
-        }
+      //this.arrowClick.emit(NEXT_ARROW_CLICK_MESSAGE);
+      this.sliderArrowDisableTeam(NEXT_ARROW_CLICK_MESSAGE);
+      this.getVisiableIndex();
     }
+  }
 
-    prevImg() {
-        if (0 >= this.leftPos + (this.sliderImageSizeWithPadding * this.slideImageCount)) {
-            this.leftPos += this.sliderImageSizeWithPadding * this.slideImageCount;
-        } else {
-            this.leftPos = 0;
-        }
+  prevImg() {
+    if (
+      0 >=
+      this.leftPos + this.sliderImageSizeWithPadding * this.slideImageCount
+    ) {
+      this.leftPos += this.sliderImageSizeWithPadding * this.slideImageCount;
+    } else {
+      this.leftPos = 0;
     }
+  }
 
-    nextImg() {
-        if ((this.imageParentDivWidth + this.leftPos) - this.sliderMainDivWidth > this.sliderImageSizeWithPadding * this.slideImageCount) {
-            this.leftPos -= this.sliderImageSizeWithPadding * this.slideImageCount;
-        } else if ((this.imageParentDivWidth + this.leftPos) - this.sliderMainDivWidth > 0) {
-            this.leftPos -= (this.imageParentDivWidth + this.leftPos) - this.sliderMainDivWidth;
-        }
+  nextImg() {
+    if (
+      this.imageParentDivWidth + this.leftPos - this.sliderMainDivWidth >
+      this.sliderImageSizeWithPadding * this.slideImageCount
+    ) {
+      this.leftPos -= this.sliderImageSizeWithPadding * this.slideImageCount;
+    } else if (
+      this.imageParentDivWidth + this.leftPos - this.sliderMainDivWidth >
+      0
+    ) {
+      this.leftPos -=
+        this.imageParentDivWidth + this.leftPos - this.sliderMainDivWidth;
     }
+  }
 
-    infinitePrevImg() {
-        this.effectStyle = `all ${this.speed}s ease-in-out`;
-        this.leftPos = 0;
+  infinitePrevImg() {
+    this.effectStyle = `all ${this.speed}s ease-in-out`;
+    this.leftPos = 0;
 
-        setTimeout(() => {
-            this.effectStyle = 'none';
-            this.leftPos = -1 * this.sliderImageSizeWithPadding * this.slideImageCount;
-            for (let i = 0; i < this.slideImageCount; i++) {
-                this.imageObj.unshift(this.imageObj[this.imageObj.length - this.slideImageCount - 1]);
-                this.imageObj.pop();
-            }
-        }, this.speed * 1000);
+    setTimeout(() => {
+      this.effectStyle = 'none';
+      this.leftPos =
+        -1 * this.sliderImageSizeWithPadding * this.slideImageCount;
+      for (let i = 0; i < this.slideImageCount; i++) {
+        this.imageObj.unshift(
+          this.imageObj[this.imageObj.length - this.slideImageCount - 1]
+        );
+        this.imageObj.pop();
+      }
+    }, this.speed * 1000);
+  }
+
+  infiniteNextImg() {
+    this.effectStyle = `all ${this.speed}s ease-in-out`;
+    this.leftPos = -2 * this.sliderImageSizeWithPadding * this.slideImageCount;
+    setTimeout(() => {
+      this.effectStyle = 'none';
+      for (let i = 0; i < this.slideImageCount; i++) {
+        this.imageObj.push(this.imageObj[this.slideImageCount]);
+        this.imageObj.shift();
+      }
+      this.leftPos =
+        -1 * this.sliderImageSizeWithPadding * this.slideImageCount;
+    }, this.speed * 1000);
+  }
+
+  getVisiableIndex() {
+    const currentIndex = Math.round(
+      (Math.abs(this.leftPos) + this.sliderImageWidth) / this.sliderImageWidth
+    );
+    if (
+      this.imageObj[currentIndex - 1] &&
+      this.imageObj[currentIndex - 1]['index'] !== undefined
+    ) {
+      this.visiableImageIndex = this.imageObj[currentIndex - 1]['index'];
     }
+  }
 
-    infiniteNextImg() {
-        this.effectStyle = `all ${this.speed}s ease-in-out`;
-        this.leftPos = -2 * this.sliderImageSizeWithPadding * this.slideImageCount;
-        setTimeout(() => {
-            this.effectStyle = 'none';
-            for (let i = 0; i < this.slideImageCount; i++) {
-                this.imageObj.push(this.imageObj[this.slideImageCount]);
-                this.imageObj.shift();
-            }
-            this.leftPos = -1 * this.sliderImageSizeWithPadding * this.slideImageCount;
-        }, this.speed * 1000);
-    }
+  /**
+   * Disable slider left/right arrow when image moving
+   */
+  sliderArrowDisableTeam(msg) {
+    this.sliderNextDisable = true;
+    this.sliderPrevDisable = true;
+    setTimeout(() => {
+      this.nextPrevSliderButtonDisable(msg);
+    }, this.speed * 1000);
+  }
 
-    getVisiableIndex() {
-        const currentIndex = Math.round((Math.abs(this.leftPos) + this.sliderImageWidth) / this.sliderImageWidth);
-        if (this.imageObj[currentIndex - 1] && this.imageObj[currentIndex - 1]['index'] !== undefined) {
-            this.visiableImageIndex = this.imageObj[currentIndex - 1]['index'];
-        }
-    }
-
-    /**
-     * Disable slider left/right arrow when image moving
-     */
-    sliderArrowDisableTeam(msg) {
+  nextPrevSliderButtonDisable(msg?) {
+    this.sliderNextDisable = false;
+    this.sliderPrevDisable = false;
+    const actionMsg = {};
+    if (!this.infinite()) {
+      if (this.imageParentDivWidth + this.leftPos <= this.sliderMainDivWidth) {
         this.sliderNextDisable = true;
+      }
+
+      if (this.leftPos >= 0) {
         this.sliderPrevDisable = true;
-        setTimeout(() => {
-            this.nextPrevSliderButtonDisable(msg);
-        }, this.speed * 1000);
+      }
+
+      actionMsg['prevDisable'] = this.sliderPrevDisable;
+      actionMsg['nextDisable'] = this.sliderNextDisable;
     }
 
-    nextPrevSliderButtonDisable(msg?) {
-        this.sliderNextDisable = false;
-        this.sliderPrevDisable = false;
-        const actionMsg = {};
-        if (!this.infinite()) {
-            if (this.imageParentDivWidth + this.leftPos <= this.sliderMainDivWidth) {
-                this.sliderNextDisable = true;
-            }
+    if (msg) {
+      this.arrowClick.emit({
+        action: msg,
+        ...actionMsg,
+      });
+    }
+  }
 
-            if (this.leftPos >= 0) {
-                this.sliderPrevDisable = true;
-            }
+  // for lightbox
+  showLightbox() {
+    if (this.imageObj.length) {
+      this.imageMouseEnterHandler();
+      this.ligthboxShow = true;
+      this.elRef.nativeElement.ownerDocument.body.style.overflow = 'hidden';
+    }
+  }
 
-            actionMsg['prevDisable'] = this.sliderPrevDisable;
-            actionMsg['nextDisable'] = this.sliderNextDisable;
+  close() {
+    this.ligthboxShow = false;
+    this.elRef.nativeElement.ownerDocument.body.style.overflow = '';
+    this.lightboxClose.emit();
+    this.imageAutoSlide();
+  }
+
+  lightboxArrowClickHandler(event) {
+    this.lightboxArrowClick.emit(event);
+  }
+
+  /**
+   * Swipe event handler
+   * Reference from https://stackoverflow.com/a/44511007/2067646
+   */
+  swipe(e: TouchEvent, when: string): void {
+    const coord: [number, number] = [
+      e.changedTouches[0].pageX,
+      e.changedTouches[0].pageY,
+    ];
+    const time = new Date().getTime();
+
+    if (when === 'start') {
+      this.swipeCoord = coord;
+      this.swipeTime = time;
+    } else if (when === 'end') {
+      const direction = [
+        coord[0] - this.swipeCoord[0],
+        coord[1] - this.swipeCoord[1],
+      ];
+      const duration = time - this.swipeTime;
+
+      if (
+        duration < 1000 && //
+        Math.abs(direction[0]) > 30 && // Long enough
+        Math.abs(direction[0]) > Math.abs(direction[1] * 3)
+      ) {
+        // Horizontal enough
+        if (direction[0] < 0) {
+          this.next();
+        } else {
+          this.prev();
         }
-
-        if (msg){
-            this.arrowClick.emit({
-                action: msg,
-                ...actionMsg
-            });
-        }
+      }
     }
-
-    // for lightbox
-    showLightbox() {
-        if (this.imageObj.length) {
-            this.imageMouseEnterHandler();
-            this.ligthboxShow = true;
-            this.elRef.nativeElement.ownerDocument.body.style.overflow = 'hidden';
-        }
-    }
-
-    close() {
-        this.ligthboxShow = false;
-        this.elRef.nativeElement.ownerDocument.body.style.overflow = '';
-        this.lightboxClose.emit();
-        this.imageAutoSlide();
-    }
-
-    lightboxArrowClickHandler(event) {
-        this.lightboxArrowClick.emit(event);
-    }
-
-    /**
-     * Swipe event handler
-     * Reference from https://stackoverflow.com/a/44511007/2067646
-     */
-    swipe(e: TouchEvent, when: string): void {
-        const coord: [number, number] = [e.changedTouches[0].pageX, e.changedTouches[0].pageY];
-        const time = new Date().getTime();
-
-        if (when === 'start') {
-            this.swipeCoord = coord;
-            this.swipeTime = time;
-        } else if (when === 'end') {
-            const direction = [coord[0] - this.swipeCoord[0], coord[1] - this.swipeCoord[1]];
-            const duration = time - this.swipeTime;
-
-            if (duration < 1000 //
-                && Math.abs(direction[0]) > 30 // Long enough
-                && Math.abs(direction[0]) > Math.abs(direction[1] * 3)) { // Horizontal enough
-                if (direction[0] < 0) {
-                    this.next();
-                } else {
-                    this.prev();
-                }
-            }
-        }
-    }
+  }
 }

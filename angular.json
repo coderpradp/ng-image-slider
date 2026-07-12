@@ -16,16 +16,9 @@
             },
             "index": "src/index.html",
             "tsConfig": "src/tsconfig.app.json",
-            "polyfills": [
-              "src/polyfills.ts"
-            ],
-            "assets": [
-              "src/assets",
-              "src/favicon.ico"
-            ],
-            "styles": [
-              "src/styles.css"
-            ],
+            "polyfills": ["src/polyfills.ts"],
+            "assets": ["src/assets", "src/favicon.ico"],
+            "styles": ["src/styles.css"],
             "scripts": [],
             "aot": false,
             "extractLicenses": false,
@@ -41,13 +34,7 @@
               "sourceMap": false,
               "namedChunks": false,
               "aot": true,
-              "extractLicenses": true,
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
-                }
-              ]
+              "extractLicenses": true
             }
           },
           "defaultConfiguration": ""
@@ -72,10 +59,7 @@
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
-            "lintFilePatterns": [
-              "src/**/*.ts",
-              "src/**/*.html"
-            ]
+            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
           }
         }
       }

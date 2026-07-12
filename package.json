@@ -6,9 +6,12 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --port 4100 --host 0.0.0.0",
-    "build": "ng build ng-image-slider --watch --configuration production",
-    "build:prod": "ng build ng-image-slider --configuration production",
-    "lint": "ng lint"
+    "build": "ng build ng-image-slider --configuration production",
+    "build:watch": "ng build ng-image-slider --watch --configuration production",
+    "lint": "ng lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "build:docs": "rm -rf docs && ng build imageg-slider --configuration production --base-href /ng-image-slider/ --output-path docs && mv docs/browser/* docs/ && rmdir docs/browser && touch docs/.nojekyll"
   },
   "dependencies": {
     "@angular-devkit/schematics": "~20.3.32",
@@ -34,7 +37,9 @@
     "@types/node": "^24.13.3",
     "angular-eslint": "21.0.1",
     "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
     "ng-packagr": "~20.3.2",
+    "prettier": "^3.9.5",
     "typescript": "~5.9.3",
     "typescript-eslint": "8.46.4"
   }
