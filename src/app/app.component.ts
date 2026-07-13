@@ -1,75 +1,79 @@
-import { Component, ViewEncapsulation, ViewChild } from '@angular/core';
+import { Component, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { NgImageSliderComponent } from '@coderpradp/ng-image-slider';
-import { HeroService } from "./hero.service";
+import { HeroService } from './hero.service';
 
 @Component({
-    selector: 'app-root',
-    templateUrl: './app.component.html',
-    styleUrls: ['./app.component.css'],
-    encapsulation: ViewEncapsulation.None,
-    standalone: false
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css'],
+  encapsulation: ViewEncapsulation.None,
+  imports: [CommonModule, FormsModule, NgImageSliderComponent],
 })
 export class AppComponent {
-    @ViewChild('nav', {static: false}) ds: NgImageSliderComponent;
-    title = 'Ng Image Slider';
-    showSlider = true;
+  private heroService = inject(HeroService);
 
-    sliderWidth: Number = 940;
-    sliderImageWidth: Number = 250;
-    sliderImageHeight: Number = 200;
-    sliderArrowShow: Boolean = true;
-    sliderInfinite: Boolean = false;
-    sliderImagePopup: Boolean = true;
-    sliderAutoSlide: Boolean = false;
-    sliderSlideImage: Number = 1;
-    sliderAnimationSpeed: any = 1;
-    imageObject;
-    fallbackImageObject;
-    slideOrderType:string = 'DESC';
+  readonly ds = viewChild<NgImageSliderComponent>('nav');
+  title = 'Ng Image Slider';
+  showSlider = true;
 
-    constructor(private heroService: HeroService) {
-        this.setImageObject();
-    }
+  sliderWidth = 940;
+  sliderImageWidth = 250;
+  sliderImageHeight = 200;
+  sliderArrowShow = true;
+  sliderInfinite = false;
+  sliderImagePopup = true;
+  sliderAutoSlide = false;
+  sliderSlideImage = 1;
+  sliderAnimationSpeed = 1;
+  imageObject;
+  fallbackImageObject;
+  slideOrderType = 'DESC';
 
-    onChangeHandler() {
-        this.setImageObject();
-        this.showSlider = false;
-        setTimeout(() => {
-            this.showSlider = true;
-        }, 10);
-    }
+  constructor() {
+    this.setImageObject();
+  }
 
-    setImageObject() {
-        // this.heroService.getImages().subscribe((data: any) => {
-        // setTimeout(() => {
-        //     this.imageObject = data;
-        // }, 3000);
-        // });
-        this.imageObject = this.heroService.getImagesWithOrder();
-        this.fallbackImageObject = this.heroService.getFallbackImages();
-    }
+  onChangeHandler() {
+    this.setImageObject();
+    this.showSlider = false;
+    setTimeout(() => {
+      this.showSlider = true;
+    }, 10);
+  }
 
-    imageOnClick(index) {
-        console.log('index', index);
-    }
+  setImageObject() {
+    // this.heroService.getImages().subscribe((data: any) => {
+    // setTimeout(() => {
+    //     this.imageObject = data;
+    // }, 3000);
+    // });
+    this.imageObject = this.heroService.getImagesWithOrder();
+    this.fallbackImageObject = this.heroService.getFallbackImages();
+  }
 
-    lightboxClose() {
-        console.log('lightbox close')
-    }
+  imageOnClick(index) {
+    console.log('index', index);
+  }
 
-    arrowOnClick(event) {
-        console.log('arrow click event', event);
-    }
+  lightboxClose() {
+    console.log('lightbox close');
+  }
 
-    lightboxArrowClick(event) {
-        console.log('popup arrow click', event);
-    }
+  arrowOnClick(event) {
+    console.log('arrow click event', event);
+  }
 
-    prevImageClick() {
-        this.ds.prev();
-    }
+  lightboxArrowClick(event) {
+    console.log('popup arrow click', event);
+  }
 
-    nextImageClick() {
-        this.ds.next();
-    }
+  prevImageClick() {
+    this.ds().prev();
+  }
+
+  nextImageClick() {
+    this.ds().next();
+  }
 }

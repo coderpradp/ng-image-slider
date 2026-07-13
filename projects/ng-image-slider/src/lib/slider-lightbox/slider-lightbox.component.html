@@ -1,40 +1,93 @@
-<div *ngIf="imageFullscreenView" class="ng-image-fullscreen-view">
+@if (imageFullscreenView) {
+  <div class="ng-image-fullscreen-view">
     <div class="lightbox-wrapper">
-        <a class="close" (click)="closeLightbox()"></a>
-        <div class="lightbox-div" #lightboxDiv>
-            <div *ngIf="showLoading" class="pre-loader">
-                <div class="mnml-spinner"></div>
+      <button
+        type="button"
+        class="close"
+        aria-label="Close"
+        (click)="closeLightbox()"
+      ></button>
+      <div class="lightbox-div">
+        @if (showLoading) {
+          <div class="pre-loader">
+            <div class="mnml-spinner"></div>
+          </div>
+        }
+        <div
+          class="lightbox-image-main"
+          [ngStyle]="{
+            'margin-left': marginLeft + 'px',
+            'grid-template-columns': 'repeat(' + images().length + ',1fr)',
+            transition: effectStyle,
+          }"
+        >
+          @for (img of images(); track img; let i = $index) {
+            <div
+              class="lightbox-image"
+              [ngStyle]="{ width: popupWidth + 'px' }"
+              [attr.id]="'ng-lightbox-image-' + i"
+              (touchstart)="swipeLightboxImg($event, 'start')"
+              (touchend)="swipeLightboxImg($event, 'end')"
+            >
+              <div
+                class="close-outside"
+                role="button"
+                tabindex="0"
+                (click)="!img?.video && closeLightbox()"
+                (keyup.enter)="!img?.video && closeLightbox()"
+              ></div>
+              <lib-custom-img
+                [imageUrl]="img?.image || img?.video"
+                [isVideo]="!!(img?.posterImage || img?.video)"
+                [imageIndex]="i"
+                [speed]="speed"
+                [videoAutoPlay]="videoAutoPlay() && i === currentImageIndex"
+                [showVideoControls]="showVideoControls() ? 1 : 0"
+                [alt]="img?.alt || ''"
+                [title]="img?.title || ''"
+                [showVideo]="true"
+                [direction]="direction()"
+                [fallbackImage]="fallbackImage()"
+              >
+              </lib-custom-img>
             </div>
-            <div class="lightbox-image-main"
-                [ngStyle]="{'margin-left': marginLeft + 'px', 'grid-template-columns': 'repeat('+images.length+',1fr)', 'transition': effectStyle}">
-                <div class="lightbox-image"
-                    [ngStyle]="{'width': popupWidth + 'px'}"
-                    *ngFor="let img of images; let i = index"
-                    [attr.id]="'ng-lightbox-image-' + i"
-                    (touchstart)="swipeLightboxImg($event, 'start')"
-                    (touchend)="swipeLightboxImg($event, 'end')"
-                    #lightboxImageDiv>
-                   <div class="close-outside" (click)="!img?.video && closeLightbox()"></div>
-                    <custom-img
-                        [imageUrl]="img?.image || img?.video"
-                        [isVideo]="!!(img?.posterImage || img?.video)"
-                        [currentImageIndex]="currentImageIndex"
-                        [imageIndex]="i"
-                        [speed]="speed"
-                        [videoAutoPlay]="videoAutoPlay && i == currentImageIndex"
-                        [showVideoControls]="showVideoControls ? 1 : 0"
-                        [alt]="img?.alt || ''"
-                        [title]="img?.title || ''"
-                        [showVideo]="true"
-                        [direction]="direction"
-                        [fallbackImage]="fallbackImage">
-                    </custom-img>
-                </div>
-            </div>
-            <div [dir]="direction" [ngClass]="{'show': title, 'hide': !title}" class="caption">{{ title }}</div>
-            <span *ngIf="images.length > 1" [ngClass]="{'disable': lightboxPrevDisable}" class="prev icons prev-icon" (click)="prevImageLightbox()">&lsaquo;</span>
-            <span *ngIf="images.length > 1" [ngClass]="{'disable': lightboxNextDisable}" class="next icons next-icon" (click)="nextImageLightbox()">&rsaquo;</span>
+          }
         </div>
+        <div
+          [dir]="direction()"
+          [ngClass]="{ show: title, hide: !title }"
+          class="caption"
+        >
+          {{ title }}
+        </div>
+        @if (images().length > 1) {
+          <span
+            [ngClass]="{ disable: lightboxPrevDisable }"
+            class="prev icons prev-icon"
+            role="button"
+            tabindex="0"
+            (click)="prevImageLightbox()"
+            (keyup.enter)="prevImageLightbox()"
+            >&lsaquo;</span
+          >
+        }
+        @if (images().length > 1) {
+          <span
+            [ngClass]="{ disable: lightboxNextDisable }"
+            class="next icons next-icon"
+            role="button"
+            tabindex="0"
+            (click)="nextImageLightbox()"
+            (keyup.enter)="nextImageLightbox()"
+            >&rsaquo;</span
+          >
+        }
+      </div>
     </div>
-    <div *ngIf="paginationShow" class="popup-pagination">{{currentImageIndex + 1}} of {{totalImages}}</div>
-</div>
+    @if (paginationShow()) {
+      <div class="popup-pagination">
+        {{ currentImageIndex + 1 }} of {{ totalImages }}
+      </div>
+    }
+  </div>
+}

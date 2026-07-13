@@ -1,69 +1,119 @@
-<div class="ng-image-slider" [ngStyle]="{'height':sliderImageHeight+'px'}">
-    <div class="ng-image-slider-container">
-        <div class="main"
-            [ngStyle]="{'height':sliderImageHeight+'px'}"
-            #sliderMain>
-            <div class="main-inner"
-                *ngIf="imageObj.length"
-                [ngClass]="{'with-ng-main-pagination': paginationShow}"
-                [ngStyle]="{'margin-left':leftPos+'px', 'width':imageParentDivWidth+'px', 'transition': effectStyle}"
-                (touchstart)="swipe($event, 'start')"
-                (touchend)="swipe($event, 'end')">
-                <div *ngFor="let img of imageObj; let i = index"
-                    [ngClass]="{'image-popup': imagePopup, 'selected-image': activeImageIndex == i}"
-                    [ngStyle]="{'width':sliderImageWidth+'px', 'margin-left':imageMargin+'px', 'margin-right':imageMargin+'px'}"
-                    class="img-div"
-                    (click)="imageOnClick(img.index)"
-                    (mouseenter)="stopSlideOnHover && imageMouseEnterHandler()"
-                    (mouseleave)="stopSlideOnHover && imageAutoSlide()"
-                    #imageDiv>
-                    <custom-img [imageUrl]="img?.thumbImage || img?.posterImage || img?.video"
-                        [isVideo]="!!(img?.posterImage || img?.video)"
-                        [alt]="img?.alt || ''"
-                        [title]="img?.title || ''"
-                        [direction]="textDirection"
-                        [ratio]="manageImageRatio"
-                        [lazy]="lazyLoading"
-                        [fallbackImage]="fallbackThumbImage">
-                    </custom-img>
-                    <div [dir]="textDirection" class="caption" *ngIf="img?.title">{{ img?.title }}</div>
+<div class="ng-image-slider" [ngStyle]="{ height: sliderImageHeight + 'px' }">
+  <div class="ng-image-slider-container">
+    <div
+      class="main"
+      [ngStyle]="{ height: sliderImageHeight + 'px' }"
+      #sliderMain
+    >
+      @if (imageObj.length) {
+        <div
+          class="main-inner"
+          [ngClass]="{ 'with-ng-main-pagination': paginationShow() }"
+          [ngStyle]="{
+            'margin-left': leftPos + 'px',
+            width: imageParentDivWidth + 'px',
+            transition: effectStyle,
+          }"
+          (touchstart)="swipe($event, 'start')"
+          (touchend)="swipe($event, 'end')"
+        >
+          @for (img of imageObj; track img; let i = $index) {
+            <div
+              [ngClass]="{
+                'image-popup': imagePopup(),
+                'selected-image': activeImageIndex === i,
+              }"
+              [ngStyle]="{
+                width: sliderImageWidth + 'px',
+                'margin-left': imageMargin + 'px',
+                'margin-right': imageMargin + 'px',
+              }"
+              class="img-div"
+              role="button"
+              tabindex="0"
+              (click)="imageOnClick(img.index)"
+              (keyup.enter)="imageOnClick(img.index)"
+              (mouseenter)="stopSlideOnHover && imageMouseEnterHandler()"
+              (mouseleave)="stopSlideOnHover && imageAutoSlide()"
+              #imageDiv
+            >
+              <lib-custom-img
+                [imageUrl]="img?.thumbImage || img?.posterImage || img?.video"
+                [isVideo]="!!(img?.posterImage || img?.video)"
+                [alt]="img?.alt || ''"
+                [title]="img?.title || ''"
+                [direction]="textDirection"
+                [ratio]="manageImageRatio()"
+                [lazy]="lazyLoading()"
+                [fallbackImage]="fallbackThumbImage"
+              >
+              </lib-custom-img>
+              @if (img?.title) {
+                <div [dir]="textDirection" class="caption">
+                  {{ img?.title }}
                 </div>
+              }
             </div>
-            <div class="ng-image-slider-error"
-                *ngIf="!imageObj.length">
-                <span class="ng-image-slider-loader"></span>
-            </div>
-            <span *ngIf="showArrowButton && imageObj.length > 1"
-                [ngClass]="{'disable': sliderPrevDisable}"
-                class="prev icons prev-icon"
-                (click)="prev()"
-                (mouseenter)="stopSlideOnHover && imageMouseEnterHandler()"
-                (mouseleave)="stopSlideOnHover && imageAutoSlide()">&lsaquo;</span>
-            <span *ngIf="showArrowButton && imageObj.length > 1"
-                [ngClass]="{'disable': sliderNextDisable}"
-                class="next icons next-icon"
-                (click)="next()"
-                (mouseenter)="imageMouseEnterHandler()"
-                (mouseleave)="imageAutoSlide()">&rsaquo;</span>
+          }
         </div>
-        <div *ngIf="imageObj.length && paginationShow" class="ng-main-pagination">{{visiableImageIndex + 1}} of {{totalImages}}</div>
+      }
+      @if (!imageObj.length) {
+        <div class="ng-image-slider-error">
+          <span class="ng-image-slider-loader"></span>
+        </div>
+      }
+      @if (showArrowButton && imageObj.length > 1) {
+        <span
+          [ngClass]="{ disable: sliderPrevDisable }"
+          class="prev icons prev-icon"
+          role="button"
+          tabindex="0"
+          (click)="prev()"
+          (keyup.enter)="prev()"
+          (mouseenter)="stopSlideOnHover && imageMouseEnterHandler()"
+          (mouseleave)="stopSlideOnHover && imageAutoSlide()"
+          >&lsaquo;</span
+        >
+      }
+      @if (showArrowButton && imageObj.length > 1) {
+        <span
+          [ngClass]="{ disable: sliderNextDisable }"
+          class="next icons next-icon"
+          role="button"
+          tabindex="0"
+          (click)="next()"
+          (keyup.enter)="next()"
+          (mouseenter)="imageMouseEnterHandler()"
+          (mouseleave)="imageAutoSlide()"
+          >&rsaquo;</span
+        >
+      }
     </div>
+    @if (imageObj.length && paginationShow()) {
+      <div class="ng-main-pagination">
+        {{ visiableImageIndex + 1 }} of {{ totalImages }}
+      </div>
+    }
+  </div>
 </div>
-<div *ngIf="ligthboxShow">
-    <slider-lightbox
-        [paginationShow]="paginationShow"
-        [showVideoControls]="showVideoControls"
-        [arrowKeyMove]="arrowKeyMove"
-        [images]="ligthboxImageObj"
-        [infinite]="infinite"
-        [animationSpeed]="speed"
-        [imageIndex]="activeImageIndex"
-        [show]="ligthboxShow"
-        [direction]="textDirection"
-        [videoAutoPlay]="videoAutoPlay"
-        [fallbackImage]="fallbackMainImage"
-        (prevImage)="lightboxArrowClickHandler($event)"
-        (nextImage)="lightboxArrowClickHandler($event)"
-        (close)="close()">
-    </slider-lightbox>
-</div>
+@if (ligthboxShow) {
+  <div>
+    <lib-slider-lightbox
+      [paginationShow]="paginationShow()"
+      [showVideoControls]="showVideoControls()"
+      [arrowKeyMove]="arrowKeyMove()"
+      [images]="ligthboxImageObj"
+      [infinite]="infinite()"
+      [animationSpeed]="speed"
+      [imageIndex]="activeImageIndex"
+      [show]="ligthboxShow"
+      [direction]="textDirection"
+      [videoAutoPlay]="videoAutoPlay()"
+      [fallbackImage]="fallbackMainImage"
+      (prevImage)="lightboxArrowClickHandler($event)"
+      (nextImage)="lightboxArrowClickHandler($event)"
+      (closed)="close()"
+    >
+    </lib-slider-lightbox>
+  </div>
+}
