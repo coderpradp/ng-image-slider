@@ -12,7 +12,6 @@
     "experimentalDecorators": true,
     "target": "ES2022",
     "typeRoots": ["node_modules/@types"],
-    "lib": ["es2017", "dom"],
     "paths": {
       "@coderpradp/ng-image-slider": ["dist/@coderpradp/ng-image-slider"],
       "core-js/es7/reflect": ["node_modules/core-js/proposals/reflect-metadata"]

@@ -3,7 +3,7 @@
 An Angular responsive image slider with lightbox popup.
 Also support youtube and mp4 video urls.
 
-(Compatible with Angular Version: 19)
+(Compatible with Angular Version: 21)
 
 ## Features!
 
@@ -29,27 +29,39 @@ Also support youtube and mp4 video urls.
 
 # Setup :
 
-**`NgImageSliderComponent` is standalone as of v20 — import it directly wherever you need it (component `imports`, or `NgModule.imports`):**
+**`NgImageSliderComponent` is standalone (as of v20) — import it directly wherever you need it:**
 
 ```typescript
+import { Component } from '@angular/core';
 import { NgImageSliderComponent } from '@coderpradp/ng-image-slider';
-...
 
-@NgModule({
-    declarations: [
-        AppComponent
-    ],
+@Component({
+    selector: 'app-root',
+    standalone: true,
     imports: [
         NgImageSliderComponent,
         ...
     ],
-    providers: [],
+    templateUrl: './app.component.html'
+})
+export class AppComponent {
+}
+```
+
+Still on an `NgModule`-based app? `NgImageSliderComponent` can be added to `NgModule.imports` the
+same way any standalone component can:
+
+```typescript
+@NgModule({
+    declarations: [AppComponent],
+    imports: [
+        NgImageSliderComponent,
+        ...
+    ],
     bootstrap: [AppComponent]
 })
-
 export class AppModule {
 }
-
 ```
 
 > **Breaking change (v20):** `NgImageSliderModule` has been removed. Import `NgImageSliderComponent` directly instead.
@@ -101,16 +113,6 @@ imageObject: Array<object> = [{
 ];
 ```
 
-#### **Note :
-
-For angular version 8 or less, use `"skipLibCheck": true` in `tsconfig.json` for prevent **ambient context** issue.
-
-```js
-"compilerOptions": {
-    "skipLibCheck": true
-}
-```
-
 ## API Reference (optional) :
 
 | Name               | Type    | Data Type             | Description                                                                                                                                                                                                                                                                                                         | Default                               |
@@ -148,7 +150,7 @@ For angular version 8 or less, use `"skipLibCheck": true` in `tsconfig.json` for
 ## Add custom navigation button
 
 ```typescript
-import { NgImageSliderComponent } from 'ng-image-slider';
+import { NgImageSliderComponent } from '@coderpradp/ng-image-slider';
 
 @Component({
     selector: 'sample',

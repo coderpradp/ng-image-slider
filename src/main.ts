@@ -1,3 +1,4 @@
+import { provideZoneChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import {
   provideHttpClient,
@@ -8,5 +9,9 @@ import { AppComponent } from './app/app.component';
 import { HeroService } from './app/hero.service';
 
 bootstrapApplication(AppComponent, {
-  providers: [HeroService, provideHttpClient(withInterceptorsFromDi())],
+  providers: [
+    provideZoneChangeDetection(),
+    provideHttpClient(withInterceptorsFromDi()),
+    HeroService,
+  ],
 }).catch((err) => console.log(err));
