@@ -35,16 +35,16 @@ export class SliderCustomImageComponent implements OnChanges {
   readonly showVideo = input<boolean>(false);
   readonly videoAutoPlay = input<boolean>(false);
   readonly showVideoControls = input<number>(1);
-  readonly imageIndex = input<number>(undefined);
+  readonly imageIndex = input<number>();
   readonly speed = input<number>(1);
-  readonly imageUrl = input(undefined);
+  readonly imageUrl = input<string>();
   readonly isVideo = input(false);
   readonly alt = input<string>('');
   readonly title = input<string>('');
   readonly direction = input<string>('ltr');
   readonly ratio = input<boolean>(false);
   readonly lazy = input<boolean>(false);
-  readonly fallbackImage = input<string>(undefined);
+  readonly fallbackImage = input<string>();
 
   ngOnChanges(changes: SimpleChanges) {
     const imageUrl = this.imageUrl();
@@ -57,7 +57,10 @@ export class SliderCustomImageComponent implements OnChanges {
   }
 
   setUrl() {
-    const url: string = this.imageUrl();
+    const url = this.imageUrl();
+    if (!url) {
+      return;
+    }
     this.imageLoading = true;
 
     let extension = '';
@@ -73,13 +76,15 @@ export class SliderCustomImageComponent implements OnChanges {
         const pathname = parsedUrl.pathname;
         const pathParts = pathname.split('.');
         if (pathParts.length > 1) {
-          extension = pathParts.pop().toLowerCase();
+          const ext = pathParts.pop();
+          extension = ext ? ext.toLowerCase() : '';
         }
       } catch {
         // Fallback
         const parts = url.split('.');
         if (parts.length > 1) {
-          extension = parts.pop().split(/#|\?/)[0].toLowerCase();
+          const ext = parts.pop();
+          extension = ext ? ext.split(/#|\?/)[0].toLowerCase() : '';
         }
       }
     }
@@ -133,24 +138,25 @@ export class SliderCustomImageComponent implements OnChanges {
     this.type = this.IMAGE;
   }
 
-  videoClickHandler(event) {
-    if (event && event.srcElement && !this.showVideoControls()) {
-      if (event.srcElement.paused) {
-        event.srcElement.play();
+  videoClickHandler(event: Event): void {
+    const target = event.srcElement as HTMLVideoElement | null;
+    if (target && !this.showVideoControls()) {
+      if (target.paused) {
+        target.play();
       } else {
-        event.srcElement.pause();
+        target.pause();
       }
     }
   }
 
   // set fallback url if error in image load
-  async errorHandler(event) {
+  async errorHandler(event: Event): Promise<void> {
     const fallbackImage = this.fallbackImage();
     if (
       fallbackImage &&
       (await this.imageSliderService.isImageExist(fallbackImage))
     ) {
-      event.target.src = fallbackImage;
+      (event.target as HTMLImageElement).src = fallbackImage;
     }
   }
 }

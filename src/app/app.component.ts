@@ -1,7 +1,12 @@
 import { Component, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { NgImageSliderComponent } from '@coderpradp/ng-image-slider';
+import {
+  NgImageSliderComponent,
+  ImageObject,
+  SliderFallbackImage,
+  SliderArrowClickEvent,
+} from '@coderpradp/ng-image-slider';
 import { HeroService } from './hero.service';
 
 @Component({
@@ -27,8 +32,8 @@ export class AppComponent {
   sliderAutoSlide = false;
   sliderSlideImage = 1;
   sliderAnimationSpeed = 1;
-  imageObject;
-  fallbackImageObject;
+  imageObject: ImageObject[] = [];
+  fallbackImageObject: SliderFallbackImage = {};
   slideOrderType = 'DESC';
 
   constructor() {
@@ -53,7 +58,7 @@ export class AppComponent {
     this.fallbackImageObject = this.heroService.getFallbackImages();
   }
 
-  imageOnClick(index) {
+  imageOnClick(index: number) {
     console.log('index', index);
   }
 
@@ -61,19 +66,19 @@ export class AppComponent {
     console.log('lightbox close');
   }
 
-  arrowOnClick(event) {
+  arrowOnClick(event: SliderArrowClickEvent) {
     console.log('arrow click event', event);
   }
 
-  lightboxArrowClick(event) {
+  lightboxArrowClick(event: string) {
     console.log('popup arrow click', event);
   }
 
   prevImageClick() {
-    this.ds().prev();
+    this.ds()?.prev();
   }
 
   nextImageClick() {
-    this.ds().next();
+    this.ds()?.next();
   }
 }

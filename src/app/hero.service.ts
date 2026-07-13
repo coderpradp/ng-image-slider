@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { ImageObject, SliderFallbackImage } from '@coderpradp/ng-image-slider';
 
 const httpOptions = {
   headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
@@ -9,7 +10,7 @@ const httpOptions = {
 export class HeroService {
   private http = inject(HttpClient);
 
-  data: Record<string, unknown>[] = [
+  data: ImageObject[] = [
     {
       image: 'https://1picsum.photos/582/536',
       thumbImage: 'https://1picsum.photos/582/536',
@@ -65,11 +66,11 @@ export class HeroService {
     );
   }
 
-  getImagesWithOrder() {
+  getImagesWithOrder(): ImageObject[] {
     return this.data;
   }
 
-  getFallbackImages() {
+  getFallbackImages(): SliderFallbackImage {
     return {
       image: 'https://picsum.photos/582/536/?blur',
       thumbImage: 'https://picsum.photos/582/536/?blur',

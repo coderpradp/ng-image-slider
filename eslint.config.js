@@ -52,10 +52,6 @@ module.exports = defineConfig([
           style: 'kebab-case',
         },
       ],
-      // Slider image items are heterogeneous ({image}/{video}/{thumbImage,posterImage} shapes),
-      // and dot-notation property access in templates needs `any` (not `object`/`unknown`) for
-      // strictTemplates to pass. Scoped to the lib only - app/service code stays fully typed.
-      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
   {

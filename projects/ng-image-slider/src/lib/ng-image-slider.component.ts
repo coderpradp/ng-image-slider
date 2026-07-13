@@ -22,6 +22,13 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { NgImageSliderService } from './ng-image-slider.service';
 import { SliderCustomImageComponent } from './slider-custom-image/slider-custom-image.component';
 import { SliderLightboxComponent } from './slider-lightbox/slider-lightbox.component';
+import {
+  ImageObject,
+  SliderImageSize,
+  SliderFallbackImage,
+  AutoSlideConfig,
+  SliderArrowClickEvent,
+} from './ng-image-slider.models';
 
 const NEXT_ARROW_CLICK_MESSAGE = 'next',
   PREV_ARROW_CLICK_MESSAGE = 'previous';
@@ -48,8 +55,8 @@ export class NgImageSliderComponent
   // for slider
   sliderMainDivWidth = 0;
   imageParentDivWidth = 0;
-  imageObj: any[] = [];
-  ligthboxImageObj: any[] = [];
+  imageObj: ImageObject[] = [];
+  ligthboxImageObj: ImageObject[] = [];
   totalImages = 0;
   leftPos = 0;
   effectStyle = 'all 1s ease-in-out';
@@ -64,13 +71,13 @@ export class NgImageSliderComponent
   sliderImageSizeWithPadding = 211;
   autoSlideCount = 0;
   stopSlideOnHover = true;
-  autoSlideInterval;
+  autoSlideInterval?: ReturnType<typeof setInterval>;
   showArrowButton = true;
   textDirection = 'ltr';
   imageMargin = 3;
   sliderOrderType = 'ASC';
-  fallbackMainImage: string;
-  fallbackThumbImage: string;
+  fallbackMainImage?: string;
+  fallbackThumbImage?: string;
 
   // for swipe event
   private swipeCoord?: [number, number];
@@ -85,15 +92,15 @@ export class NgImageSliderComponent
   readonly imageDiv = viewChild<ElementRef>('imageDiv');
 
   // @inputs
-  readonly imageSize = input<any>();
+  readonly imageSize = input<SliderImageSize>();
   readonly infinite = input<boolean>(false);
   readonly imagePopup = input<boolean>(true);
   readonly direction = input<string>();
   readonly animationSpeed = input<number>();
-  readonly images = input<any[]>([]);
-  readonly fallbackImage = input<any>();
+  readonly images = input<ImageObject[]>([]);
+  readonly fallbackImage = input<SliderFallbackImage>();
   readonly slideImage = input<number>();
-  readonly autoSlide = input<any>();
+  readonly autoSlide = input<AutoSlideConfig>();
   readonly showArrow = input<boolean>();
   readonly orderType = input<string>();
   readonly videoAutoPlay = input<boolean>(false);
@@ -106,8 +113,8 @@ export class NgImageSliderComponent
 
   // @Outputs
   readonly imageClick = output<number>();
-  readonly arrowClick = output<object>();
-  readonly lightboxArrowClick = output<object>();
+  readonly arrowClick = output<SliderArrowClickEvent>();
+  readonly lightboxArrowClick = output<string>();
   readonly lightboxClose = output<void>();
 
   constructor() {
@@ -173,7 +180,7 @@ export class NgImageSliderComponent
     });
 
     effect(() => {
-      let count = this.autoSlide();
+      let count: AutoSlideConfig | undefined = this.autoSlide();
       if (
         count &&
         (typeof count === 'number' ||
@@ -195,11 +202,11 @@ export class NgImageSliderComponent
             count,
             'stopOnHover'
           )
-            ? count['stopOnHover']
+            ? !!count['stopOnHover']
             : true;
           count = Math.round(count['interval']);
         }
-        this.autoSlideCount = count * 1000;
+        this.autoSlideCount = Number(count) * 1000;
       }
     });
 
@@ -321,12 +328,13 @@ export class NgImageSliderComponent
     }
   }
 
-  setSliderImages(imgObj) {
+  setSliderImages(imgObj: ImageObject[]) {
     if (imgObj && imgObj instanceof Array && imgObj.length) {
       const sliderOrderEnable = imgObj.find((img) => {
         if (Object.prototype.hasOwnProperty.call(img, 'order')) {
           return true;
         }
+        return false;
       });
 
       if (sliderOrderEnable) {
@@ -337,7 +345,7 @@ export class NgImageSliderComponent
       }
 
       this.imageObj = imgObj.map((img, index) => {
-        img['index'] = index;
+        img.index = index;
         return img;
       });
       this.ligthboxImageObj = [...this.imageObj];
@@ -418,7 +426,7 @@ export class NgImageSliderComponent
     this.nextPrevSliderButtonDisable();
   }
 
-  imageOnClick(index) {
+  imageOnClick(index: number) {
     this.activeImageIndex = index;
     if (this.imagePopup()) {
       this.showLightbox();
@@ -527,18 +535,16 @@ export class NgImageSliderComponent
     const currentIndex = Math.round(
       (Math.abs(this.leftPos) + this.sliderImageWidth) / this.sliderImageWidth
     );
-    if (
-      this.imageObj[currentIndex - 1] &&
-      this.imageObj[currentIndex - 1]['index'] !== undefined
-    ) {
-      this.visiableImageIndex = this.imageObj[currentIndex - 1]['index'];
+    const img = this.imageObj[currentIndex - 1];
+    if (img && img.index !== undefined) {
+      this.visiableImageIndex = img.index;
     }
   }
 
   /**
    * Disable slider left/right arrow when image moving
    */
-  sliderArrowDisableTeam(msg) {
+  sliderArrowDisableTeam(msg: string) {
     this.sliderNextDisable = true;
     this.sliderPrevDisable = true;
     setTimeout(() => {
@@ -546,10 +552,10 @@ export class NgImageSliderComponent
     }, this.speed * 1000);
   }
 
-  nextPrevSliderButtonDisable(msg?) {
+  nextPrevSliderButtonDisable(msg?: string) {
     this.sliderNextDisable = false;
     this.sliderPrevDisable = false;
-    const actionMsg = {};
+    const actionMsg: { prevDisable?: boolean; nextDisable?: boolean } = {};
     if (!this.infinite()) {
       if (this.imageParentDivWidth + this.leftPos <= this.sliderMainDivWidth) {
         this.sliderNextDisable = true;
@@ -559,8 +565,8 @@ export class NgImageSliderComponent
         this.sliderPrevDisable = true;
       }
 
-      actionMsg['prevDisable'] = this.sliderPrevDisable;
-      actionMsg['nextDisable'] = this.sliderNextDisable;
+      actionMsg.prevDisable = this.sliderPrevDisable;
+      actionMsg.nextDisable = this.sliderNextDisable;
     }
 
     if (msg) {
@@ -587,7 +593,7 @@ export class NgImageSliderComponent
     this.imageAutoSlide();
   }
 
-  lightboxArrowClickHandler(event) {
+  lightboxArrowClickHandler(event: string) {
     this.lightboxArrowClick.emit(event);
   }
 
@@ -606,6 +612,9 @@ export class NgImageSliderComponent
       this.swipeCoord = coord;
       this.swipeTime = time;
     } else if (when === 'end') {
+      if (!this.swipeCoord || this.swipeTime === undefined) {
+        return;
+      }
       const direction = [
         coord[0] - this.swipeCoord[0],
         coord[1] - this.swipeCoord[1],

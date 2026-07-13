@@ -11,6 +11,7 @@
     "moduleResolution": "bundler",
     "experimentalDecorators": true,
     "target": "ES2022",
+    "strict": true,
     "typeRoots": ["node_modules/@types"],
     "paths": {
       "@coderpradp/ng-image-slider": ["dist/@coderpradp/ng-image-slider"],

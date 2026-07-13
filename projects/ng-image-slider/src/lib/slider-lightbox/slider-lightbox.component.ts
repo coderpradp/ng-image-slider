@@ -11,6 +11,7 @@ import {
 
 import { CommonModule } from '@angular/common';
 import { SliderCustomImageComponent } from '../slider-custom-image/slider-custom-image.component';
+import { ImageObject } from '../ng-image-slider.models';
 
 const LIGHTBOX_NEXT_ARROW_CLICK_MESSAGE = 'lightbox next',
   LIGHTBOX_PREV_ARROW_CLICK_MESSAGE = 'lightbox previous';
@@ -46,7 +47,7 @@ export class SliderLightboxComponent {
   private swipeLightboxImgTime?: number;
 
   // @Inputs
-  readonly images = input<any[]>([]);
+  readonly images = input<ImageObject[]>([]);
   readonly imageIndex = input<number>();
   readonly show = input<boolean>(false);
   readonly videoAutoPlay = input<boolean>(false);
@@ -56,7 +57,7 @@ export class SliderLightboxComponent {
   readonly infinite = input<boolean>(false);
   readonly arrowKeyMove = input<boolean>(true);
   readonly showVideoControls = input<boolean>(true);
-  readonly fallbackImage = input<string>(undefined);
+  readonly fallbackImage = input<string>();
 
   // @Output
   readonly closed = output<void>();
@@ -200,12 +201,11 @@ export class SliderLightboxComponent {
           );
         }
       }
-      for (const videoI in this.document.getElementsByTagName('video')) {
-        if (
-          this.document.getElementsByTagName('video')[videoI] &&
-          this.document.getElementsByTagName('video')[videoI].pause
-        ) {
-          this.document.getElementsByTagName('video')[videoI].pause();
+      const videos = this.document.getElementsByTagName('video');
+      for (const videoI in videos) {
+        const video = videos[videoI];
+        if (video) {
+          video.pause();
         }
       }
     }
@@ -226,6 +226,12 @@ export class SliderLightboxComponent {
       this.swipeLightboxImgCoord = coord;
       this.swipeLightboxImgTime = time;
     } else if (when === 'end') {
+      if (
+        !this.swipeLightboxImgCoord ||
+        this.swipeLightboxImgTime === undefined
+      ) {
+        return;
+      }
       const direction = [
         coord[0] - this.swipeLightboxImgCoord[0],
         coord[1] - this.swipeLightboxImgCoord[1],

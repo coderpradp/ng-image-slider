@@ -31,8 +31,8 @@
               class="img-div"
               role="button"
               tabindex="0"
-              (click)="imageOnClick(img.index)"
-              (keyup.enter)="imageOnClick(img.index)"
+              (click)="imageOnClick(img.index!)"
+              (keyup.enter)="imageOnClick(img.index!)"
               (mouseenter)="stopSlideOnHover && imageMouseEnterHandler()"
               (mouseleave)="stopSlideOnHover && imageAutoSlide()"
               #imageDiv
