@@ -115,28 +115,29 @@ imageObject: Array<object> = [{
 
 ## API Reference (optional) :
 
-| Name               | Type    | Data Type             | Description                                                                                                                                                                                                                                                                                                         | Default                               |
-| ------------------ | ------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| fallbackImage      | @Input  | object                | Sets fallback image for image load errors. See fallbackImage Input format below.                                                                                                                                                                                                                                    | null                                  |
-| infinite           | @Input  | boolean               | Infinite sliding images if value is **true**.                                                                                                                                                                                                                                                                       | false                                 |
-| imagePopup         | @Input  | boolean               | Enable image lightBox popup option on slider image click.                                                                                                                                                                                                                                                           | true                                  |
-| animationSpeed     | @Input  | number                | By this user can set slider animation speed. Minimum value is **0.1 second** and Maximum value is **5 second**.                                                                                                                                                                                                     | 1                                     |
-| slideImage         | @Input  | number                | Set how many images will move on left/right arrow click.                                                                                                                                                                                                                                                            | 1                                     |
-| imageSize          | @Input  | object                | Set slider images width, height and space. space is use for set space between slider images. Pass object like `{width: '400px', height: '300px', space: 4}` or you can pass value in percentage `{width: '20%', height: '20%'}` OR set only space `{space: 4}`                                                      | `{width: 205, height: 200, space: 3}` |
-| manageImageRatio   | @Input  | boolean               | Show images with aspect ratio if value is `true` and set imageSize width and height on parent div                                                                                                                                                                                                                   | false                                 |
-| autoSlide          | @Input  | number/boolean/object | Auto slide images according provided time interval. Option will work only if **infinite** option is **true**. For number data type minimum value is 1 second and Maximum value is 5 second. By object data type you can prevent auto slide stop behaviour on mouse hover event. `{interval: 2, stopOnHover: false}` | 0                                     |
-| showArrow          | @Input  | boolean               | Hide/Show slider arrow buttons                                                                                                                                                                                                                                                                                      | true                                  |
-| arrowKeyMove       | @Input  | boolean               | Disable slider and popup image left/right move on arrow key press event, if value is `false`                                                                                                                                                                                                                        | true                                  |
-| videoAutoPlay      | @Input  | boolean               | Auto play popup video                                                                                                                                                                                                                                                                                               | false                                 |
-| showVideoControls  | @Input  | boolean               | Hide video control if value is `false`                                                                                                                                                                                                                                                                              | true                                  |
-| direction          | @Input  | string                | Set text direction. You can pass **rtl** / **ltr** / **auto**                                                                                                                                                                                                                                                       | ltr                                   |
-| slideOrderType     | @Input  | string                | Arrange slider images in Ascending order by `ASC` and in Descending order by `DESC`. `order` key must be exist with image object.                                                                                                                                                                                   | ASC                                   |
-| lazyLoading        | @Input  | boolean               | Lazy load images and Iframe if true.                                                                                                                                                                                                                                                                                | false                                 |
-| defaultActiveImage | @Input  | number                | Set image as selected on load.                                                                                                                                                                                                                                                                                      | null                                  |
-| imageClick         | @Output | n/a                   | Executes when click event on slider image. Return image index.                                                                                                                                                                                                                                                      | n/a                                   |
-| arrowClick         | @Output | n/a                   | Executes when click on slider left/right arrow. Returns current event name and next/previous button disabled status.                                                                                                                                                                                                | n/a                                   |
-| lightboxClose      | @Output | n/a                   | Executes when lightbox close.                                                                                                                                                                                                                                                                                       | n/a                                   |
-| lightboxArrowClick | @Output | n/a                   | Executes when click on lightbox next/previous arrow.                                                                                                                                                                                                                                                                | n/a                                   |
+| Name               | Type    | Data Type               | Description                                                                                                                                                                                                                                                                                                         | Default                               |
+| ------------------ | ------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| images             | @Input  | `ImageObject[]`         | Array of image/video objects to render in the slider. See ImageObject format above.                                                                                                                                                                                                                                 | `[]`                                  |
+| fallbackImage      | @Input  | `SliderFallbackImage`   | Sets fallback image for image load errors. See fallbackImage Input format below.                                                                                                                                                                                                                                    | null                                  |
+| infinite           | @Input  | boolean                 | Infinite sliding images if value is **true**.                                                                                                                                                                                                                                                                       | false                                 |
+| imagePopup         | @Input  | boolean                 | Enable image lightBox popup option on slider image click.                                                                                                                                                                                                                                                           | true                                  |
+| animationSpeed     | @Input  | number                  | By this user can set slider animation speed. Minimum value is **0.1 second** and Maximum value is **5 second**.                                                                                                                                                                                                     | 1                                     |
+| slideImage         | @Input  | number                  | Set how many images will move on left/right arrow click.                                                                                                                                                                                                                                                            | 1                                     |
+| imageSize          | @Input  | `SliderImageSize`       | Set slider images width, height and space. space is use for set space between slider images. Pass object like `{width: '400px', height: '300px', space: 4}` or you can pass value in percentage `{width: '20%', height: '20%'}` OR set only space `{space: 4}`                                                      | `{width: 205, height: 200, space: 3}` |
+| manageImageRatio   | @Input  | boolean                 | Show images with aspect ratio if value is `true` and set imageSize width and height on parent div                                                                                                                                                                                                                   | false                                 |
+| autoSlide          | @Input  | `AutoSlideConfig`       | Auto slide images according provided time interval. Option will work only if **infinite** option is **true**. For number data type minimum value is 1 second and Maximum value is 5 second. By object data type you can prevent auto slide stop behaviour on mouse hover event. `{interval: 2, stopOnHover: false}` | 0                                     |
+| showArrow          | @Input  | boolean                 | Hide/Show slider arrow buttons                                                                                                                                                                                                                                                                                      | true                                  |
+| arrowKeyMove       | @Input  | boolean                 | Disable slider and popup image left/right move on arrow key press event, if value is `false`                                                                                                                                                                                                                        | true                                  |
+| videoAutoPlay      | @Input  | boolean                 | Auto play popup video                                                                                                                                                                                                                                                                                               | false                                 |
+| showVideoControls  | @Input  | boolean                 | Hide video control if value is `false`                                                                                                                                                                                                                                                                              | true                                  |
+| direction          | @Input  | string                  | Set text direction. You can pass **rtl** / **ltr** / **auto**                                                                                                                                                                                                                                                       | ltr                                   |
+| slideOrderType     | @Input  | string                  | Arrange slider images in Ascending order by `ASC` and in Descending order by `DESC`. `order` key must be exist with image object.                                                                                                                                                                                   | ASC                                   |
+| lazyLoading        | @Input  | boolean                 | Lazy load images and Iframe if true.                                                                                                                                                                                                                                                                                | false                                 |
+| defaultActiveImage | @Input  | number                  | Set image as selected on load.                                                                                                                                                                                                                                                                                      | null                                  |
+| imageClick         | @Output | `number`                | Executes when click event on slider image. Return image index.                                                                                                                                                                                                                                                      | n/a                                   |
+| arrowClick         | @Output | `SliderArrowClickEvent` | Executes when click on slider left/right arrow. Returns current event name and next/previous button disabled status.                                                                                                                                                                                                | n/a                                   |
+| lightboxClose      | @Output | n/a                     | Executes when lightbox close.                                                                                                                                                                                                                                                                                       | n/a                                   |
+| lightboxArrowClick | @Output | `string`                | Executes when click on lightbox next/previous arrow.                                                                                                                                                                                                                                                                | n/a                                   |
 
 ## fallbackImage Input Format
 
@@ -147,30 +148,55 @@ imageObject: Array<object> = [{
 }
 ```
 
+## TypeScript types
+
+As of v21.1, the package exports proper TypeScript types for its `@Input`/`@Output` shapes
+(previously `any`/`object`) — import them directly instead of hand-rolling your own:
+
+```typescript
+import type {
+  ImageObject,
+  SliderImageSize,
+  SliderFallbackImage,
+  AutoSlideConfig,
+  SliderArrowClickEvent,
+} from '@coderpradp/ng-image-slider';
+```
+
+| Type                    | Used by                | Shape                                                                                 |
+| ----------------------- | ---------------------- | ------------------------------------------------------------------------------------- |
+| `ImageObject`           | `images` @Input        | `{ image?, thumbImage?, title?, alt?, order?, video?, videoAutoPlay?, posterImage? }` |
+| `SliderImageSize`       | `imageSize` @Input     | `{ width?: number \| string; height?: number \| string; space?: number }`             |
+| `SliderFallbackImage`   | `fallbackImage` @Input | `{ image?: string; thumbImage?: string }`                                             |
+| `AutoSlideConfig`       | `autoSlide` @Input     | `boolean \| number \| { interval: number; stopOnHover?: boolean }`                    |
+| `SliderArrowClickEvent` | `arrowClick` @Output   | `{ action: string; prevDisable?: boolean; nextDisable?: boolean }`                    |
+
 ## Add custom navigation button
 
 ```typescript
-import { NgImageSliderComponent } from '@coderpradp/ng-image-slider';
+import { Component, viewChild } from '@angular/core';
+import { NgImageSliderComponent, ImageObject } from '@coderpradp/ng-image-slider';
 
 @Component({
     selector: 'sample',
-        template:`
-        <ng-image-slider [images]="imageObject" #nav>
-        </ng-image-slider>
+    standalone: true,
+    imports: [NgImageSliderComponent],
+    template: `
+        <ng-image-slider [images]="imageObject" #nav></ng-image-slider>
         <button (click)="prevImageClick()">Prev</button>
         <button (click)="nextImageClick()">Next</button>
-        `
+    `
 })
 class Sample {
-    @ViewChild('nav') slider: NgImageSliderComponent;
-    imageObject = [{...}]
+    readonly nav = viewChild<NgImageSliderComponent>('nav');
+    imageObject: ImageObject[] = [{...}];
 
     prevImageClick() {
-        this.slider.prev();
+        this.nav()?.prev();
     }
 
     nextImageClick() {
-        this.slider.next();
+        this.nav()?.next();
     }
 }
 ```
