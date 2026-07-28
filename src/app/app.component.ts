@@ -51,11 +51,6 @@ export class AppComponent {
   }
 
   setImageObject() {
-    // this.heroService.getImages().subscribe((data: any) => {
-    // setTimeout(() => {
-    //     this.imageObject = data;
-    // }, 3000);
-    // });
     this.imageObject = this.heroService.getImagesWithOrder();
     this.fallbackImageObject = this.heroService.getFallbackImages();
   }
