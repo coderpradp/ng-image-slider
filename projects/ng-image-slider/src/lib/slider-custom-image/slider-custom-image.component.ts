@@ -140,8 +140,10 @@ export class SliderCustomImageComponent implements OnChanges {
       return;
     }
 
-    // Fallback for unknown extensions: default to image
-    this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl('');
+    // Must stay a falsy plain string: the template's `@if (!fileUrl)` renders the
+    // "Invalid file format" message, and a bypassSecurityTrust* call would return a
+    // truthy SafeValue object here even for an empty URL.
+    this.fileUrl = '';
     this.type = this.IMAGE;
   }
 

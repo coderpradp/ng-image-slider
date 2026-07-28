@@ -33,10 +33,18 @@
   registered for the `source|src` pair, so the value was never unwrapped and reached the DOM as its
   `toString()` text — `"SafeValue must use [property]=binding: ..."` — which the browser then
   resolved as a relative URL, firing a bogus same-origin request that 404'd for every video item.
-  Playback was unaffected (the `<video>` element fell back), but the console and network log were
-  polluted. The video URL is now carried in a separate plain-string field and gets Angular's
-  standard URL sanitization; the YouTube `<iframe>` keeps its `SafeResourceUrl`, which it genuinely
-  requires.
+  Because the `<video>` element carries no `src` of its own, that `<source>` was its only media
+  resource, so **mp4 playback was broken outright** — not merely accompanied by console and network
+  noise. The video URL is now carried in a separate plain-string field, so it reaches the DOM
+  as-written; the YouTube `<iframe>` keeps its `SafeResourceUrl`, which it genuinely requires.
+  (Note that `source|src` carries `SecurityContext.NONE`, so Angular applies no sanitization to it
+  either way — this restores correct behavior, it does not add sanitization that was missing.)
+
+- **"Invalid file format" could never be displayed.** The unknown-extension fallback in `setUrl()`
+  assigned `bypassSecurityTrustResourceUrl('')`, which returns a truthy `SafeValue` object, so the
+  template's `@if (!fileUrl)` guard never fired. An item with an unsupported extension (e.g.
+  `.webp`) rendered an `<img src="">` instead of the error message, which browsers resolve against
+  the document URL — another spurious request. The fallback now assigns an empty string.
 
 - **Documentation: the `orderType` input was documented under the wrong name.** Both READMEs listed
   it as `slideOrderType`, which is not a real input — copying the documented binding produced a
