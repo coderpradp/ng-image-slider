@@ -2,8 +2,15 @@
 
 ## [21.2.1] - 2026-07-28
 
+### Changed
+
+- The lightbox now closes only via its close button or `Escape`. The click-outside overlay each
+  slide carried has been removed.
+
 ### Fixed
 
+- `<video>` slides were unplayable in the lightbox: the close-outside overlay painted above the
+  player and swallowed every click. YouTube was unaffected, which is why only mp4 was broken.
 - Advancing the lightbox threw `TypeError: video.pause is not a function` when a `<video>` was
   present.
 - Slides with an extensionless URL — the norm for CDNs and image services — rendered "Invalid file
