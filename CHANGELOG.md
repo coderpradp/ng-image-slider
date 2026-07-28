@@ -37,6 +37,17 @@
 
 ### Fixed
 
+- **A slide whose URL was mutated in place kept rendering the old URL.** `SliderCustomImageComponent`
+  only re-resolved its URL when `imageUrl`'s change was the _first_ one (or when `videoAutoPlay` was
+  on, which only the lightbox binds), so `setUrl()` effectively ran once per component instance. Both
+  `@for` loops track by object identity, so mutating a property on an existing item — e.g.
+  `imageObject[0].thumbImage = 'b.jpg'` — reuses the component rather than recreating it, and every
+  derived field (`type`, `fileUrl`, `videoSrc`) kept its stale value. The URL is now re-resolved
+  whenever the `imageUrl` binding reports an actually-different value; clearing it resets the
+  component to rendering nothing instead of stranding the previous item's type on screen. Replacing
+  the whole array (the documented pattern, and what the demo does) was unaffected and behaves as
+  before.
+
 - **`<source [src]>` inside the video player received a `SafeValue` instead of a URL.** `setUrl()`
   wrapped every branch's URL in `bypassSecurityTrustResourceUrl()`, including the video branch, and
   the template bound that one `fileUrl` field into `<source [src]>`. Angular has no sanitizer

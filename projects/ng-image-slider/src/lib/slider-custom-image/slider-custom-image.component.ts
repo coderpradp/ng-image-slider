@@ -31,7 +31,7 @@ export class SliderCustomImageComponent implements OnChanges {
   INVALID = 'invalid';
 
   // Only ever holds a trust-bypassed value or ''. Must stay falsy while no URL
-  // has resolved: an item with no URL never runs setUrl(), and the template's
+  // has resolved: an item with no URL leaves it '', and the template's
   // `@else if (fileUrl || videoSrc)` is what makes it render nothing. A
   // bypassSecurityTrust* call would return a truthy SafeValue even for an empty
   // URL and defeat that gate.
@@ -61,23 +61,28 @@ export class SliderCustomImageComponent implements OnChanges {
   readonly fallbackImage = input<string>();
 
   ngOnChanges(changes: SimpleChanges) {
-    const imageUrl = this.imageUrl();
-    if (imageUrl && typeof imageUrl === 'string') {
-      const firstChange = changes['imageUrl']?.firstChange ?? false;
-      if (firstChange || this.videoAutoPlay()) {
-        this.setUrl();
-      }
+    // `changes['imageUrl']` is present only when the value actually differs, so
+    // this covers the first change and any later in-place mutation of a slide
+    // object (the parent's `@for` tracks by identity, so the component instance
+    // is reused rather than recreated). The videoAutoPlay arm re-resolves the
+    // URL when the lightbox autoplays a slide it navigated to.
+    if (changes['imageUrl'] || this.videoAutoPlay()) {
+      this.setUrl();
     }
   }
 
   setUrl() {
-    const url = this.imageUrl();
-    if (!url) {
-      return;
-    }
     this.imageLoading = true;
     this.fileUrl = '';
     this.videoSrc = null;
+
+    const url = this.imageUrl();
+    if (!url) {
+      // Cleared in place: drop back to the "nothing resolved" state instead of
+      // leaving the previous URL's type (e.g. INVALID) rendering.
+      this.type = this.IMAGE;
+      return;
+    }
 
     let extension = '';
 
