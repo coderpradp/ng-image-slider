@@ -46,10 +46,9 @@
   was itself nested inside the outer `@if (fileUrl)` wrapper, making the two conditions mutually
   exclusive and the branch unreachable regardless. An item with an unsupported extension (e.g.
   `.webp`) rendered an `<img src="">` instead of the message, which browsers resolve against the
-  document URL — another spurious request. The fallback now assigns an empty string, and the
-  message has been hoisted out of the wrapper into an `@else` branch, so it actually renders.
-  The `@else` is guarded on `imageUrl()` so items carrying no URL at all keep rendering nothing
-  rather than reporting a format error.
+  document URL — another spurious request. Unresolvable items now carry an explicit `invalid` type
+  that the template checks before anything else, so the message renders instead of depending on a
+  falsy sentinel. Items carrying no URL at all continue to render nothing, as before.
 
 - **Documentation: the `orderType` input was documented under the wrong name.** Both READMEs listed
   it as `slideOrderType`, which is not a real input — copying the documented binding produced a

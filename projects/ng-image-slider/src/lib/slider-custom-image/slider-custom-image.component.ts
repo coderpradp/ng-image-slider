@@ -28,6 +28,7 @@ export class SliderCustomImageComponent implements OnChanges {
   YOUTUBE = 'youtube';
   IMAGE = 'image';
   VIDEO = 'video';
+  INVALID = 'invalid';
   fileUrl: SafeResourceUrl = '';
   // Must stay a plain string: `source|src` has no entry in Angular's security
   // schema, so a SafeValue bound here is never unwrapped and reaches the DOM as
@@ -124,7 +125,9 @@ export class SliderCustomImageComponent implements OnChanges {
     // Check for valid video extension
     if (validVideoExtensions.includes(extension)) {
       this.type = this.VIDEO;
-      this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      // Only gates the template wrapper; the <source> reads videoSrc, so this
+      // needs no trust bypass.
+      this.fileUrl = url;
       this.videoSrc = url;
 
       if (this.videoAutoPlay()) {
@@ -140,11 +143,8 @@ export class SliderCustomImageComponent implements OnChanges {
       return;
     }
 
-    // Must stay a falsy plain string: the template's `@else` branch renders the
-    // "Invalid file format" message, and a bypassSecurityTrust* call would return a
-    // truthy SafeValue object here even for an empty URL.
     this.fileUrl = '';
-    this.type = this.IMAGE;
+    this.type = this.INVALID;
   }
 
   videoClickHandler(event: Event): void {
