@@ -13,6 +13,7 @@
 
 - `<video>` slides were unplayable in the lightbox: the close-outside overlay painted above the
   player and swallowed every click. YouTube was unaffected, which is why only mp4 was broken.
+- `imageSize` changes applied one change late, so the slider re-measured from the previous size.
 - Advancing the lightbox threw `TypeError: video.pause is not a function` when a `<video>` was
   present.
 - Slides with an extensionless URL — the norm for CDNs and image services — rendered "Invalid file
