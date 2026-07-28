@@ -297,15 +297,18 @@ export class NgImageSliderComponent
 
   ngOnChanges(changes: SimpleChanges) {
     if (
-      changes.images &&
-      Object.prototype.hasOwnProperty.call(changes.images, 'previousValue') &&
-      Object.prototype.hasOwnProperty.call(changes.images, 'currentValue') &&
-      changes.images.previousValue != changes.images.currentValue
+      changes['images'] &&
+      Object.prototype.hasOwnProperty.call(
+        changes['images'],
+        'previousValue'
+      ) &&
+      Object.prototype.hasOwnProperty.call(changes['images'], 'currentValue') &&
+      changes['images'].previousValue != changes['images'].currentValue
     ) {
-      this.setSliderImages(changes.images.currentValue);
+      this.setSliderImages(changes['images'].currentValue);
     }
-    if (changes && changes.imageSize) {
-      const size: SimpleChange = changes.imageSize;
+    if (changes && changes['imageSize']) {
+      const size: SimpleChange = changes['imageSize'];
       if (
         size &&
         size.previousValue &&

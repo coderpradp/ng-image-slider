@@ -50,7 +50,7 @@ export class SliderCustomImageComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     const imageUrl = this.imageUrl();
     if (imageUrl && typeof imageUrl === 'string') {
-      const firstChange = changes.imageUrl?.firstChange ?? false;
+      const firstChange = changes['imageUrl']?.firstChange ?? false;
       if (firstChange || this.videoAutoPlay()) {
         this.setUrl();
       }
