@@ -9,6 +9,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NgImageSliderService } from './../ng-image-slider.service';
+import { SliderDirection } from '../ng-image-slider.models';
 
 const youtubeRegExp =
     /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|\?v=)([^#&?]*).*/,
@@ -41,7 +42,7 @@ export class SliderCustomImageComponent implements OnChanges {
   readonly isVideo = input(false);
   readonly alt = input<string>('');
   readonly title = input<string>('');
-  readonly direction = input<string>('ltr');
+  readonly direction = input<SliderDirection>('ltr');
   readonly ratio = input<boolean>(false);
   readonly lazy = input<boolean>(false);
   readonly fallbackImage = input<string>();

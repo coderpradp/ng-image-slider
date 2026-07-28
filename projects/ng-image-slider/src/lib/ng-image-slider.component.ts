@@ -28,10 +28,14 @@ import {
   SliderFallbackImage,
   AutoSlideConfig,
   SliderArrowClickEvent,
+  SliderDirection,
+  SliderOrderType,
+  SliderArrowAction,
+  LightboxArrowAction,
 } from './ng-image-slider.models';
 
-const NEXT_ARROW_CLICK_MESSAGE = 'next',
-  PREV_ARROW_CLICK_MESSAGE = 'previous';
+const NEXT_ARROW_CLICK_MESSAGE: SliderArrowAction = 'next',
+  PREV_ARROW_CLICK_MESSAGE: SliderArrowAction = 'previous';
 
 @Component({
   selector: 'ng-image-slider',
@@ -73,9 +77,9 @@ export class NgImageSliderComponent
   stopSlideOnHover = true;
   autoSlideInterval?: ReturnType<typeof setInterval>;
   showArrowButton = true;
-  textDirection = 'ltr';
+  textDirection: SliderDirection = 'ltr';
   imageMargin = 3;
-  sliderOrderType = 'ASC';
+  sliderOrderType: SliderOrderType = 'ASC';
   fallbackMainImage?: string;
   fallbackThumbImage?: string;
 
@@ -95,14 +99,14 @@ export class NgImageSliderComponent
   readonly imageSize = input<SliderImageSize>();
   readonly infinite = input<boolean>(false);
   readonly imagePopup = input<boolean>(true);
-  readonly direction = input<string>();
+  readonly direction = input<SliderDirection>();
   readonly animationSpeed = input<number>();
   readonly images = input<ImageObject[]>([]);
   readonly fallbackImage = input<SliderFallbackImage>();
   readonly slideImage = input<number>();
   readonly autoSlide = input<AutoSlideConfig>();
   readonly showArrow = input<boolean>();
-  readonly orderType = input<string>();
+  readonly orderType = input<SliderOrderType>();
   readonly videoAutoPlay = input<boolean>(false);
   readonly paginationShow = input<boolean>(false);
   readonly arrowKeyMove = input<boolean>(true);
@@ -114,7 +118,7 @@ export class NgImageSliderComponent
   // @Outputs
   readonly imageClick = output<number>();
   readonly arrowClick = output<SliderArrowClickEvent>();
-  readonly lightboxArrowClick = output<string>();
+  readonly lightboxArrowClick = output<LightboxArrowAction>();
   readonly lightboxClose = output<void>();
 
   constructor() {
@@ -220,7 +224,8 @@ export class NgImageSliderComponent
     effect(() => {
       const data = this.orderType();
       if (data !== undefined && typeof data === 'string') {
-        this.sliderOrderType = data.toUpperCase();
+        // Tolerate lowercase from untyped/non-strict templates.
+        this.sliderOrderType = data.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
       }
     });
 
@@ -340,7 +345,7 @@ export class NgImageSliderComponent
       if (sliderOrderEnable) {
         imgObj = this.imageSliderService.orderArray(
           imgObj,
-          this.sliderOrderType.toUpperCase()
+          this.sliderOrderType
         );
       }
 
@@ -544,7 +549,7 @@ export class NgImageSliderComponent
   /**
    * Disable slider left/right arrow when image moving
    */
-  sliderArrowDisableTeam(msg: string) {
+  sliderArrowDisableTeam(msg: SliderArrowAction) {
     this.sliderNextDisable = true;
     this.sliderPrevDisable = true;
     setTimeout(() => {
@@ -552,7 +557,7 @@ export class NgImageSliderComponent
     }, this.speed * 1000);
   }
 
-  nextPrevSliderButtonDisable(msg?: string) {
+  nextPrevSliderButtonDisable(msg?: SliderArrowAction) {
     this.sliderNextDisable = false;
     this.sliderPrevDisable = false;
     const actionMsg: { prevDisable?: boolean; nextDisable?: boolean } = {};
@@ -593,7 +598,7 @@ export class NgImageSliderComponent
     this.imageAutoSlide();
   }
 
-  lightboxArrowClickHandler(event: string) {
+  lightboxArrowClickHandler(event: LightboxArrowAction) {
     this.lightboxArrowClick.emit(event);
   }
 

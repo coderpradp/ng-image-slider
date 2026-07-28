@@ -11,10 +11,14 @@ import {
 
 import { CommonModule } from '@angular/common';
 import { SliderCustomImageComponent } from '../slider-custom-image/slider-custom-image.component';
-import { ImageObject } from '../ng-image-slider.models';
+import {
+  ImageObject,
+  SliderDirection,
+  LightboxArrowAction,
+} from '../ng-image-slider.models';
 
-const LIGHTBOX_NEXT_ARROW_CLICK_MESSAGE = 'lightbox next',
-  LIGHTBOX_PREV_ARROW_CLICK_MESSAGE = 'lightbox previous';
+const LIGHTBOX_NEXT_ARROW_CLICK_MESSAGE: LightboxArrowAction = 'lightbox next',
+  LIGHTBOX_PREV_ARROW_CLICK_MESSAGE: LightboxArrowAction = 'lightbox previous';
 
 @Component({
   selector: 'lib-slider-lightbox',
@@ -51,7 +55,7 @@ export class SliderLightboxComponent {
   readonly imageIndex = input<number>();
   readonly show = input<boolean>(false);
   readonly videoAutoPlay = input<boolean>(false);
-  readonly direction = input<string>('ltr');
+  readonly direction = input<SliderDirection>('ltr');
   readonly paginationShow = input<boolean>(false);
   readonly animationSpeed = input<number>();
   readonly infinite = input<boolean>(false);
@@ -61,8 +65,8 @@ export class SliderLightboxComponent {
 
   // @Output
   readonly closed = output<void>();
-  readonly prevImage = output<string>();
-  readonly nextImage = output<string>();
+  readonly prevImage = output<LightboxArrowAction>();
+  readonly nextImage = output<LightboxArrowAction>();
 
   constructor() {
     effect(() => {

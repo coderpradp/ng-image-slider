@@ -1,5 +1,51 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- **Narrowed four public types from bare `string` to literal unions.** `direction`, `orderType`,
+  the `action` field of `arrowClick`'s payload, and the `lightboxArrowClick` output previously
+  accepted or emitted any `string`. They are now typed via four new exported types:
+
+  | Type                  | Values                                   | Used by                        |
+  | --------------------- | ---------------------------------------- | ------------------------------ |
+  | `SliderDirection`     | `'ltr' \| 'rtl' \| 'auto'`               | `direction` input              |
+  | `SliderOrderType`     | `'ASC' \| 'DESC'`                        | `orderType` input              |
+  | `SliderArrowAction`   | `'next' \| 'previous'`                   | `SliderArrowClickEvent.action` |
+  | `LightboxArrowAction` | `'lightbox next' \| 'lightbox previous'` | `lightboxArrowClick` output    |
+
+  `NgImageSliderService.orderArray`'s `orderType` parameter is narrowed to `SliderOrderType` as
+  well.
+
+  Runtime behavior is unchanged, including the existing tolerance for lowercase `orderType` values
+  passed from untyped templates.
+
+  **Potentially breaking for consumers using `strictTemplates`**: binding a value whose declared
+  type is `string` (rather than a literal) now fails to compile. Annotate the field with the
+  exported type instead — e.g. `slideOrderType: SliderOrderType = 'DESC';`.
+
+### Fixed
+
+- **Documentation: the `orderType` input was documented under the wrong name.** Both READMEs listed
+  it as `slideOrderType`, which is not a real input — copying the documented binding produced a
+  template error. The name in the demo app (`[orderType]="slideOrderType"`) is a local field, which
+  is how the wrong name survived from the unmaintained upstream.
+- Documentation: `lightboxClose`'s data type was listed as `n/a`; it is `void`.
+
+### Documentation
+
+- Replaced `imageObject: Array<object>` with `ImageObject[]` in both `imageObject` examples, and
+  retagged those fences from `js` to `typescript`.
+- Retyped the `fallbackImage` example from an untyped JSON blob to a `SliderFallbackImage`-annotated
+  TypeScript snippet.
+- Documented `AutoSlideOptions` (exported since 21.1.0 but previously absent from the docs) and
+  `NgImageSliderService`'s four public methods (`isBase64`, `base64FileExtension`, `orderArray`,
+  `isImageExist`).
+- Backticked the bare `boolean` / `number` / `string` entries in the API reference table for
+  consistency with the named types.
+- Demo app updated to model correct usage of the narrowed types.
+
 ## [21.1.1] - 2026-07-13
 
 ### Documentation
