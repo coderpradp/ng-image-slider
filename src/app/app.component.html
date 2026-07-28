@@ -1,27 +1,33 @@
 <!--The content below is only a placeholder and can be replaced.-->
 <div class="bg">
   <h1 class="text-center demo-title-main">Welcome to {{ title }}!</h1>
-  <div class="margin-auto demo-div box-shadow" [ngStyle]="{ width: '100%' }">
-    <ng-image-slider
-      #nav
-      [images]="imageObject"
-      [fallbackImage]="fallbackImageObject"
-      [infinite]="sliderInfinite"
-      [imagePopup]="sliderImagePopup"
-      [showArrow]="sliderArrowShow"
-      [autoSlide]="sliderAutoSlide ? 1 : 0"
-      [slideImage]="+sliderSlideImage"
-      [animationSpeed]="sliderAnimationSpeed"
-      [manageImageRatio]="false"
-      [videoAutoPlay]="false"
-      [showVideoControls]="true"
-      [paginationShow]="false"
-      [orderType]="slideOrderType"
-      (imageClick)="imageOnClick($event)"
-      (arrowClick)="arrowOnClick($event)"
-      (lightboxClose)="lightboxClose()"
-      (lightboxArrowClick)="lightboxArrowClick($event)"
-    ></ng-image-slider>
+  <div
+    class="margin-auto demo-div box-shadow"
+    [ngStyle]="{ width: sliderWidth + 'px' }"
+  >
+    @if (showSlider) {
+      <ng-image-slider
+        #nav
+        [images]="imageObject"
+        [fallbackImage]="fallbackImageObject"
+        [infinite]="sliderInfinite"
+        [imagePopup]="sliderImagePopup"
+        [showArrow]="sliderArrowShow"
+        [imageSize]="{ width: sliderImageWidth, height: sliderImageHeight }"
+        [autoSlide]="sliderAutoSlide ? 1 : 0"
+        [slideImage]="+sliderSlideImage"
+        [animationSpeed]="sliderAnimationSpeed"
+        [manageImageRatio]="false"
+        [videoAutoPlay]="false"
+        [showVideoControls]="true"
+        [paginationShow]="false"
+        [orderType]="slideOrderType"
+        (imageClick)="imageOnClick($event)"
+        (arrowClick)="arrowOnClick($event)"
+        (lightboxClose)="lightboxClose()"
+        (lightboxArrowClick)="lightboxArrowClick($event)"
+      ></ng-image-slider>
+    }
   </div>
 
   <p class="demo-title-sub margin-auto">PLAY WITH IT!</p>
@@ -48,7 +54,6 @@
           <input
             id="sliderWidthInput"
             type="number"
-            [value]="sliderWidth"
             [(ngModel)]="sliderWidth"
             (change)="onChangeHandler()"
           />
@@ -68,22 +73,14 @@
         <div class="size-div">
           <span class="input-title">Width</span>
           <span class="input-icon input-icon-right">
-            <input
-              type="number"
-              [value]="sliderImageWidth"
-              [(ngModel)]="sliderImageWidth"
-            />
+            <input type="number" [(ngModel)]="sliderImageWidth" />
             <i>px</i>
           </span>
         </div>
         <div class="size-div">
           <span class="input-title">Height</span>
           <span class="input-icon input-icon-right">
-            <input
-              type="number"
-              [value]="sliderImageHeight"
-              [(ngModel)]="sliderImageHeight"
-            />
+            <input type="number" [(ngModel)]="sliderImageHeight" />
             <i>px</i>
           </span>
         </div>
@@ -101,7 +98,6 @@
           <input
             id="sliderArrowShowInput"
             type="checkbox"
-            checked
             [(ngModel)]="sliderArrowShow"
           />
           <span class="slider round"></span>
@@ -118,7 +114,6 @@
             id="sliderInfiniteInput"
             type="checkbox"
             (change)="onChangeHandler()"
-            checked
             [(ngModel)]="sliderInfinite"
           />
           <span class="slider round"></span>
@@ -134,7 +129,6 @@
           <input
             id="sliderImagePopupInput"
             type="checkbox"
-            checked
             [(ngModel)]="sliderImagePopup"
           />
           <span class="slider round"></span>
@@ -170,7 +164,6 @@
           id="sliderAnimationSpeedInput"
           class="range-slider__range"
           type="range"
-          [value]="sliderAnimationSpeed"
           [(ngModel)]="sliderAnimationSpeed"
           min="0.1"
           max="5"
