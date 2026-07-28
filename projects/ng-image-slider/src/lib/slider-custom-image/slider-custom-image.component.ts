@@ -29,6 +29,10 @@ export class SliderCustomImageComponent implements OnChanges {
   IMAGE = 'image';
   VIDEO = 'video';
   fileUrl: SafeResourceUrl = '';
+  // Must stay a plain string: `source|src` has no entry in Angular's security
+  // schema, so a SafeValue bound here is never unwrapped and reaches the DOM as
+  // its toString() text ("SafeValue must use [property]=binding: ...").
+  videoSrc: string | null = null;
   type = this.IMAGE;
   imageLoading = true;
 
@@ -63,6 +67,7 @@ export class SliderCustomImageComponent implements OnChanges {
       return;
     }
     this.imageLoading = true;
+    this.videoSrc = null;
 
     let extension = '';
 
@@ -120,6 +125,7 @@ export class SliderCustomImageComponent implements OnChanges {
     if (validVideoExtensions.includes(extension)) {
       this.type = this.VIDEO;
       this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      this.videoSrc = url;
 
       if (this.videoAutoPlay()) {
         const videoElement = document.getElementById(

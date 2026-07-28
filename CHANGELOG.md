@@ -27,6 +27,17 @@
 
 ### Fixed
 
+- **`<source [src]>` inside the video player received a `SafeValue` instead of a URL.** `setUrl()`
+  wrapped every branch's URL in `bypassSecurityTrustResourceUrl()`, including the video branch, and
+  the template bound that one `fileUrl` field into `<source [src]>`. Angular has no sanitizer
+  registered for the `source|src` pair, so the value was never unwrapped and reached the DOM as its
+  `toString()` text — `"SafeValue must use [property]=binding: ..."` — which the browser then
+  resolved as a relative URL, firing a bogus same-origin request that 404'd for every video item.
+  Playback was unaffected (the `<video>` element fell back), but the console and network log were
+  polluted. The video URL is now carried in a separate plain-string field and gets Angular's
+  standard URL sanitization; the YouTube `<iframe>` keeps its `SafeResourceUrl`, which it genuinely
+  requires.
+
 - **Documentation: the `orderType` input was documented under the wrong name.** Both READMEs listed
   it as `slideOrderType`, which is not a real input — copying the documented binding produced a
   template error. The name in the demo app (`[orderType]="slideOrderType"`) is a local field, which
