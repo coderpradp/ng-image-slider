@@ -1,5 +1,20 @@
 # Changelog
 
+## [21.2.1] - 2026-07-28
+
+### Fixed
+
+- **Slides with an extensionless URL rendered "Invalid file format" instead of the image.**
+  Making the invalid-format branch reachable in 21.2.0 exposed a much older misclassification:
+  any URL whose path carries no file extension — the norm for CDNs, image services and signed
+  links (`https://picsum.photos/582/537`) — fell into the unsupported-extension bucket. A URL that
+  does not name an extension says nothing about its file type, so such items are now treated as
+  images and left to the `<img>` error handler and `fallbackImage`. Only a URL that names an
+  extension the library does not support is reported as invalid.
+
+- Extension detection no longer reads a dot from an earlier path segment, so
+  `https://example.com/v1.2/photo` is no longer misread as having an extension of `2/photo`.
+
 ## [21.2.0] - 2026-07-28
 
 ### Changed
@@ -95,6 +110,7 @@
 
 Baseline release for this changelog; see the git history for earlier versions.
 
+[21.2.1]: https://github.com/coderpradp/ng-image-slider/compare/v21.2.0...v21.2.1
 [21.2.0]: https://github.com/coderpradp/ng-image-slider/compare/v21.1.1...v21.2.0
 [21.1.1]: https://github.com/coderpradp/ng-image-slider/compare/v21.1.0...v21.1.1
 [21.1.0]: https://github.com/coderpradp/ng-image-slider/compare/v21.0.0...v21.1.0
