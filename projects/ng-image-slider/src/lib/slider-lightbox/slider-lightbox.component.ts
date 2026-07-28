@@ -196,21 +196,19 @@ export class SliderLightboxComponent {
     ) {
       this.title = images[this.currentImageIndex]['title'] || '';
       this.totalImages = images.length;
-      const iframes = this.document.getElementsByTagName('iframe');
-      for (const iframeI in iframes) {
-        if (iframes[iframeI] && iframes[iframeI].contentWindow?.postMessage) {
-          iframes[iframeI].contentWindow.postMessage(
-            '{"event":"command","func":"pauseVideo","args":""}',
-            '*'
-          );
-        }
+      // Array.from, not `for...in`: iterating an HTMLCollection with `for...in`
+      // also yields its inherited enumerable members (`length`, `item`,
+      // `namedItem`), and `item` passes a plain truthiness guard.
+      const iframes = Array.from(this.document.getElementsByTagName('iframe'));
+      for (const iframe of iframes) {
+        iframe.contentWindow?.postMessage(
+          '{"event":"command","func":"pauseVideo","args":""}',
+          '*'
+        );
       }
-      const videos = this.document.getElementsByTagName('video');
-      for (const videoI in videos) {
-        const video = videos[videoI];
-        if (video) {
-          video.pause();
-        }
+      const videos = Array.from(this.document.getElementsByTagName('video'));
+      for (const video of videos) {
+        video.pause();
       }
     }
   }
