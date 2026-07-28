@@ -1,4 +1,4 @@
-@if (imageFullscreenView) {
+@if (imageFullscreenView()) {
   <div class="ng-image-fullscreen-view">
     <div class="lightbox-wrapper">
       <button
@@ -8,23 +8,18 @@
         (click)="closeLightbox()"
       ></button>
       <div class="lightbox-div">
-        @if (showLoading) {
-          <div class="pre-loader">
-            <div class="mnml-spinner"></div>
-          </div>
-        }
         <div
           class="lightbox-image-main"
           [ngStyle]="{
-            'margin-left': marginLeft + 'px',
+            'margin-left': marginLeft() + 'px',
             'grid-template-columns': 'repeat(' + images().length + ',1fr)',
-            transition: effectStyle,
+            transition: effectStyle(),
           }"
         >
           @for (img of images(); track img; let i = $index) {
             <div
               class="lightbox-image"
-              [ngStyle]="{ width: popupWidth + 'px' }"
+              [ngStyle]="{ width: popupWidth() + 'px' }"
               [attr.id]="'ng-lightbox-image-' + i"
               (touchstart)="swipeLightboxImg($event, 'start')"
               (touchend)="swipeLightboxImg($event, 'end')"
@@ -33,8 +28,8 @@
                 [imageUrl]="img?.image || img?.video"
                 [isVideo]="!!(img?.posterImage || img?.video)"
                 [imageIndex]="i"
-                [speed]="speed"
-                [videoAutoPlay]="videoAutoPlay() && i === currentImageIndex"
+                [speed]="speed()"
+                [videoAutoPlay]="videoAutoPlay() && i === currentImageIndex()"
                 [showVideoControls]="showVideoControls() ? 1 : 0"
                 [alt]="img?.alt || ''"
                 [title]="img?.title || ''"
@@ -48,14 +43,14 @@
         </div>
         <div
           [dir]="direction()"
-          [ngClass]="{ show: title, hide: !title }"
+          [ngClass]="{ show: title(), hide: !title() }"
           class="caption"
         >
-          {{ title }}
+          {{ title() }}
         </div>
         @if (images().length > 1) {
           <span
-            [ngClass]="{ disable: lightboxPrevDisable }"
+            [ngClass]="{ disable: lightboxPrevDisable() }"
             class="prev icons prev-icon"
             role="button"
             tabindex="0"
@@ -66,7 +61,7 @@
         }
         @if (images().length > 1) {
           <span
-            [ngClass]="{ disable: lightboxNextDisable }"
+            [ngClass]="{ disable: lightboxNextDisable() }"
             class="next icons next-icon"
             role="button"
             tabindex="0"
@@ -79,7 +74,7 @@
     </div>
     @if (paginationShow()) {
       <div class="popup-pagination">
-        {{ currentImageIndex + 1 }} of {{ totalImages }}
+        {{ currentImageIndex() + 1 }} of {{ totalImages() }}
       </div>
     }
   </div>
