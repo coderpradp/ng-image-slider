@@ -1,6 +1,6 @@
 @if (type === INVALID) {
   <div [dir]="direction()" class="invalid-msg">Invalid file format</div>
-} @else if (fileUrl) {
+} @else if (fileUrl || videoSrc) {
   <div
     class="custom-image-main"
     [ngClass]="{ 'ng-fullimage-loading': imageLoading }"
