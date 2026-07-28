@@ -91,22 +91,20 @@ export class SliderCustomImageComponent implements OnChanges {
         .base64FileExtension(url)
         .toLowerCase();
     } else {
+      let path: string;
       try {
         // Parse the URL and extract pathname to avoid query param issues
-        const parsedUrl = new URL(url);
-        const pathname = parsedUrl.pathname;
-        const pathParts = pathname.split('.');
-        if (pathParts.length > 1) {
-          const ext = pathParts.pop();
-          extension = ext ? ext.toLowerCase() : '';
-        }
+        path = new URL(url).pathname;
       } catch {
-        // Fallback
-        const parts = url.split('.');
-        if (parts.length > 1) {
-          const ext = parts.pop();
-          extension = ext ? ext.split(/#|\?/)[0].toLowerCase() : '';
-        }
+        // Relative or malformed URL: strip query/fragment by hand.
+        path = url.split(/#|\?/)[0];
+      }
+      // Only the last path segment can carry the extension; a dot earlier in
+      // the path (e.g. /v1.2/photo) says nothing about the file type.
+      const lastSegment = path.slice(path.lastIndexOf('/') + 1);
+      const dotIndex = lastSegment.lastIndexOf('.');
+      if (dotIndex > -1) {
+        extension = lastSegment.slice(dotIndex + 1).toLowerCase();
       }
     }
 
@@ -154,6 +152,16 @@ export class SliderCustomImageComponent implements OnChanges {
           }, this.speed() * 1000);
         }
       }
+      return;
+    }
+
+    // Extensionless URLs are ordinary for CDNs and signed links, so they say
+    // nothing about the file type: assume an image and let the <img> error
+    // handler fall back. Only a URL that names an extension we don't support
+    // is genuinely invalid.
+    if (!extension) {
+      this.type = this.IMAGE;
+      this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
       return;
     }
 
