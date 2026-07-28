@@ -25,6 +25,16 @@
   type is `string` (rather than a literal) now fails to compile. Annotate the field with the
   exported type instead — e.g. `slideOrderType: SliderOrderType = 'DESC';`.
 
+- **Internal: `fileUrl` is no longer overloaded as a truthiness flag on the video path.** It is
+  declared `SafeResourceUrl`, but the video branch assigned it the raw, untrusted URL purely so the
+  template's `@else if (fileUrl)` wrapper would render — `SafeResourceUrl` is an empty marker
+  interface, so `string` satisfies it structurally and the compiler said nothing. No live defect
+  (the `video` case binds `videoSrc`, not `fileUrl`), but the annotation asserted a trust bypass
+  that had not happened, which is exactly what a future editor would rely on when adding another
+  `[src]` binding. `fileUrl` now stays `''` on that path and the wrapper gates on
+  `fileUrl || videoSrc`; it is also reset at the top of `setUrl()` so no trusted value survives a
+  change from an image item to a video item. No consumer-facing change.
+
 ### Fixed
 
 - **`<source [src]>` inside the video player received a `SafeValue` instead of a URL.** `setUrl()`

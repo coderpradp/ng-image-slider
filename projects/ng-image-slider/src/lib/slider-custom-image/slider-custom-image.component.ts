@@ -30,10 +30,11 @@ export class SliderCustomImageComponent implements OnChanges {
   VIDEO = 'video';
   INVALID = 'invalid';
 
-  // Must stay falsy while no URL has resolved: an item with no URL never runs
-  // setUrl(), and the template's `@else if (fileUrl)` is what makes it render
-  // nothing. A bypassSecurityTrust* call would return a truthy SafeValue even
-  // for an empty URL and defeat that gate.
+  // Only ever holds a trust-bypassed value or ''. Must stay falsy while no URL
+  // has resolved: an item with no URL never runs setUrl(), and the template's
+  // `@else if (fileUrl || videoSrc)` is what makes it render nothing. A
+  // bypassSecurityTrust* call would return a truthy SafeValue even for an empty
+  // URL and defeat that gate.
   fileUrl: SafeResourceUrl = '';
 
   // Must stay a plain string: `source|src` has no entry in Angular's security
@@ -75,6 +76,7 @@ export class SliderCustomImageComponent implements OnChanges {
       return;
     }
     this.imageLoading = true;
+    this.fileUrl = '';
     this.videoSrc = null;
 
     let extension = '';
@@ -132,10 +134,9 @@ export class SliderCustomImageComponent implements OnChanges {
     // Check for valid video extension
     if (validVideoExtensions.includes(extension)) {
       this.type = this.VIDEO;
-      // In this branch fileUrl only gates the template wrapper — the VIDEO case
-      // binds videoSrc, not fileUrl — so it needs no trust bypass. Other
-      // branches do bind fileUrl into img/iframe [src] and must keep theirs.
-      this.fileUrl = url;
+      // fileUrl stays '' here: the VIDEO case binds videoSrc, and the template
+      // wrapper gates on `fileUrl || videoSrc`. Assigning the raw url would
+      // make the SafeResourceUrl annotation a lie.
       this.videoSrc = url;
 
       if (this.videoAutoPlay()) {
@@ -151,7 +152,6 @@ export class SliderCustomImageComponent implements OnChanges {
       return;
     }
 
-    this.fileUrl = '';
     this.type = this.INVALID;
   }
 
