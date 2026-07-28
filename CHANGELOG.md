@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [21.2.1] - 2026-07-28
 
 ### Fixed
 
@@ -10,10 +10,6 @@
   and `item` passes a plain truthiness guard. Both loops now snapshot with `Array.from` and use
   `for...of`, so only real elements are visited. The `<iframe>` loop was unaffected in practice
   (those members have no `contentWindow`), just wasteful.
-
-## [21.2.1] - 2026-07-28
-
-### Fixed
 
 - **Slides with an extensionless URL rendered "Invalid file format" instead of the image.**
   Making the invalid-format branch reachable in 21.2.0 exposed a much older misclassification:
