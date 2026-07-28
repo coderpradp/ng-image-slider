@@ -40,11 +40,16 @@
   (Note that `source|src` carries `SecurityContext.NONE`, so Angular applies no sanitization to it
   either way — this restores correct behavior, it does not add sanitization that was missing.)
 
-- **"Invalid file format" could never be displayed.** The unknown-extension fallback in `setUrl()`
-  assigned `bypassSecurityTrustResourceUrl('')`, which returns a truthy `SafeValue` object, so the
-  template's `@if (!fileUrl)` guard never fired. An item with an unsupported extension (e.g.
-  `.webp`) rendered an `<img src="">` instead of the error message, which browsers resolve against
-  the document URL — another spurious request. The fallback now assigns an empty string.
+- **"Invalid file format" could never be displayed.** Two independent faults hid it. The
+  unknown-extension fallback in `setUrl()` assigned `bypassSecurityTrustResourceUrl('')`, which
+  returns a truthy `SafeValue` object, so the `@if (!fileUrl)` guard never fired; and that guard
+  was itself nested inside the outer `@if (fileUrl)` wrapper, making the two conditions mutually
+  exclusive and the branch unreachable regardless. An item with an unsupported extension (e.g.
+  `.webp`) rendered an `<img src="">` instead of the message, which browsers resolve against the
+  document URL — another spurious request. The fallback now assigns an empty string, and the
+  message has been hoisted out of the wrapper into an `@else` branch, so it actually renders.
+  The `@else` is guarded on `imageUrl()` so items carrying no URL at all keep rendering nothing
+  rather than reporting a format error.
 
 - **Documentation: the `orderType` input was documented under the wrong name.** Both READMEs listed
   it as `slideOrderType`, which is not a real input — copying the documented binding produced a

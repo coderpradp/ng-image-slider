@@ -140,7 +140,7 @@ export class SliderCustomImageComponent implements OnChanges {
       return;
     }
 
-    // Must stay a falsy plain string: the template's `@if (!fileUrl)` renders the
+    // Must stay a falsy plain string: the template's `@else` branch renders the
     // "Invalid file format" message, and a bypassSecurityTrust* call would return a
     // truthy SafeValue object here even for an empty URL.
     this.fileUrl = '';

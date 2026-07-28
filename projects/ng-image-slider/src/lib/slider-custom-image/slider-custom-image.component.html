@@ -40,11 +40,10 @@
         Your browser does not support the video tag.
       </video>
     }
-    @if (!fileUrl) {
-      <div [dir]="direction()" class="invalid-msg">Invalid file format</div>
-    }
     @if (type === YOUTUBE || type === VIDEO || isVideo()) {
       <span class="youtube-icon"></span>
     }
   </div>
+} @else if (imageUrl()) {
+  <div [dir]="direction()" class="invalid-msg">Invalid file format</div>
 }
