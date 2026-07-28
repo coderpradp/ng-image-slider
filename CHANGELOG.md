@@ -6,6 +6,8 @@
 
 - The lightbox now closes only via its close button or `Escape`. The click-outside overlay each
   slide carried has been removed.
+- Video thumbnails render as plain posters instead of interactive players, matching the YouTube
+  ones. A click opens the lightbox rather than toggling playback.
 
 ### Fixed
 
