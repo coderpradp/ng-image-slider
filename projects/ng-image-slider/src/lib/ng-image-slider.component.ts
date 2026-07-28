@@ -5,7 +5,6 @@ import {
   OnChanges,
   DoCheck,
   SimpleChanges,
-  SimpleChange,
   AfterViewInit,
   OnDestroy,
   ViewEncapsulation,
@@ -146,6 +145,9 @@ export class NgImageSliderComponent
         ) {
           this.sliderImageReceivedHeight = data['height'];
         }
+        // Must recompute here rather than in ngOnChanges: that hook runs before this
+        // effect flushes, so it would size the slider from the previous imageSize.
+        this.setSliderWidth();
       }
     });
 
@@ -306,22 +308,6 @@ export class NgImageSliderComponent
       changes['images'].previousValue != changes['images'].currentValue
     ) {
       this.setSliderImages(changes['images'].currentValue);
-    }
-    if (changes && changes['imageSize']) {
-      const size: SimpleChange = changes['imageSize'];
-      if (
-        size &&
-        size.previousValue &&
-        size.currentValue &&
-        size.previousValue.width &&
-        size.previousValue.height &&
-        size.currentValue.width &&
-        size.currentValue.height &&
-        (size.previousValue.width !== size.currentValue.width ||
-          size.previousValue.height !== size.currentValue.height)
-      ) {
-        this.setSliderWidth();
-      }
     }
   }
 

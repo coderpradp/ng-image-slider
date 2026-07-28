@@ -2,116 +2,86 @@
 
 ## [21.2.1] - 2026-07-28
 
+### Changed
+
+- The lightbox now closes only via its close button or `Escape`. The click-outside overlay each
+  slide carried has been removed.
+- Video thumbnails render as plain posters instead of interactive players, matching the YouTube
+  ones. A click opens the lightbox rather than toggling playback.
+
 ### Fixed
 
-- **Advancing the lightbox threw `TypeError: video.pause is not a function` when a `<video>` was
-  present.** The pause-all-media loops iterated the live `HTMLCollection` with `for...in`, which
-  also yields the collection's inherited enumerable members (`length`, `item`, `namedItem`) —
-  and `item` passes a plain truthiness guard. Both loops now snapshot with `Array.from` and use
-  `for...of`, so only real elements are visited. The `<iframe>` loop was unaffected in practice
-  (those members have no `contentWindow`), just wasteful.
-
-- **Slides with an extensionless URL rendered "Invalid file format" instead of the image.**
-  Making the invalid-format branch reachable in 21.2.0 exposed a much older misclassification:
-  any URL whose path carries no file extension — the norm for CDNs, image services and signed
-  links (`https://picsum.photos/582/537`) — fell into the unsupported-extension bucket. A URL that
-  does not name an extension says nothing about its file type, so such items are now treated as
-  images and left to the `<img>` error handler and `fallbackImage`. Only a URL that names an
-  extension the library does not support is reported as invalid.
-
+- `<video>` slides were unplayable in the lightbox: the close-outside overlay painted above the
+  player and swallowed every click. YouTube was unaffected, which is why only mp4 was broken.
+- `imageSize` changes applied one change late, so the slider re-measured from the previous size.
+- Advancing the lightbox threw `TypeError: video.pause is not a function` when a `<video>` was
+  present.
+- Slides with an extensionless URL — the norm for CDNs and image services — rendered "Invalid file
+  format" instead of the image. Only a URL naming an unsupported extension is now reported as
+  invalid.
 - Extension detection no longer reads a dot from an earlier path segment, so
-  `https://example.com/v1.2/photo` is no longer misread as having an extension of `2/photo`.
+  `https://example.com/v1.2/photo` is no longer misread.
 
 ## [21.2.0] - 2026-07-28
 
 ### Changed
 
-- **Four public types narrowed from bare `string` to literal unions**, exported for consumer use:
-
-  | Type                  | Values                                   | Used by                        |
-  | --------------------- | ---------------------------------------- | ------------------------------ |
-  | `SliderDirection`     | `'ltr' \| 'rtl' \| 'auto'`               | `direction` input              |
-  | `SliderOrderType`     | `'ASC' \| 'DESC'`                        | `orderType` input              |
-  | `SliderArrowAction`   | `'next' \| 'previous'`                   | `SliderArrowClickEvent.action` |
-  | `LightboxArrowAction` | `'lightbox next' \| 'lightbox previous'` | `lightboxArrowClick` output    |
-
-  `NgImageSliderService.orderArray` is narrowed to `SliderOrderType` too. Runtime behavior is
-  unchanged.
+- Four public types narrowed from `string` to exported literal unions: `SliderDirection`
+  (`direction`), `SliderOrderType` (`orderType`, `NgImageSliderService.orderArray`),
+  `SliderArrowAction` (`SliderArrowClickEvent.action`) and `LightboxArrowAction`
+  (`lightboxArrowClick`). Runtime behavior is unchanged.
 
   **Potentially breaking under `strictTemplates`**: binding a field declared as `string` no longer
-  compiles — annotate it with the exported type, e.g. `slideOrderType: SliderOrderType = 'DESC';`.
-
-- Internal: `fileUrl` no longer holds a raw URL on the video path, where its `SafeResourceUrl` type
-  asserted a trust bypass that had never happened. No consumer-facing change.
+  compiles — annotate it with the exported type.
 
 ### Fixed
 
-- **mp4 playback was broken outright.** The video URL was trust-wrapped, but `source|src` has no
-  sanitizer entry, so it reached the DOM as `SafeValue` text and the browser resolved it as a
-  relative URL. Video URLs now use a plain-string field; the YouTube `<iframe>` keeps its
-  `SafeResourceUrl`.
-
-- **"Invalid file format" could never be displayed.** Its guard was both defeated by a truthy
-  `SafeValue` sentinel and unreachable in the template, so unsupported extensions rendered an empty
-  `<img>`. Such items now carry an explicit `invalid` type; items with no URL still render nothing.
-
-- **Slides ignored in-place `imageUrl` changes.** The URL resolved only on a component's first
-  change, so mutating an item object in place — the `@for` loops track by identity — left the slide
-  stale. It is now re-resolved whenever the binding reports a different value.
-
-- Documentation: `orderType` was documented under a name that is not a real input
-  (`slideOrderType`), and `lightboxClose`'s data type was listed as `n/a`; it is `void`.
+- mp4 playback was broken outright: the video URL was trust-wrapped and reached the DOM as
+  `SafeValue` text, which the browser resolved as a relative URL.
+- "Invalid file format" could never be displayed; unsupported extensions rendered an empty `<img>`.
+- Slides ignored in-place `imageUrl` changes.
 
 ### Documentation
 
-- Typed and retagged the `imageObject` / `fallbackImage` examples; backticked the primitive type
-  entries in the API reference table.
-- Documented `AutoSlideOptions` and `NgImageSliderService`'s four public methods.
-- Demo app updated to model correct usage of the narrowed types.
+- Documented `AutoSlideOptions` and `NgImageSliderService`'s public methods; corrected the
+  `orderType` and `lightboxClose` entries in the API reference.
 
 ## [21.1.1] - 2026-07-13
 
 ### Documentation
 
-- Documented the exported TypeScript types in both READMEs and removed stale
-  unmaintained-upstream content: a wrong compatible-Angular-version line, an Angular-8-era
-  `skipLibCheck` note, and an `ng-image-slider` import path that should have been
-  `@coderpradp/ng-image-slider`.
+- Documented the exported TypeScript types and removed stale unmaintained-upstream content.
 
 ## [21.1.0] - 2026-07-13
 
 ### Added
 
-- Exported TypeScript types for the public API, replacing `any` / `object` on the input and output
-  surface: `ImageObject`, `SliderImageSize`, `SliderFallbackImage`, `AutoSlideConfig`,
-  `AutoSlideOptions`, and `SliderArrowClickEvent`.
+- Exported TypeScript types for the public API, replacing `any` / `object`: `ImageObject`,
+  `SliderImageSize`, `SliderFallbackImage`, `AutoSlideConfig`, `AutoSlideOptions` and
+  `SliderArrowClickEvent`.
 
 ### Changed
 
-- Enabled TypeScript strict mode across the project.
+- Enabled TypeScript strict mode.
 
 ## [21.0.0] - 2026-07-13
 
 ### Changed
 
-- Migrated to Angular 21 (`@angular/core` `~21.2.18`). Almost entirely a mechanical dependency
-  bump — the codebase was already standalone and signals-first, so no library or demo code changes
-  were required. No consumer-facing breaking change; the major tracks the Angular major.
+- Migrated to Angular 21 (`@angular/core` `~21.2.18`). No consumer-facing breaking change; the
+  major tracks the Angular major.
 
 ## [20.0.0] - 2026-07-13
 
 ### Removed
 
-- **BREAKING: `NgImageSliderModule` has been removed.** The library is now standalone. Import
-  `NgImageSliderComponent` directly instead of the module — it works in both standalone
-  `imports: []` and `NgModule.imports`.
+- **BREAKING: `NgImageSliderModule` has been removed.** The library is standalone — import
+  `NgImageSliderComponent` directly. It works in both standalone `imports: []` and `NgModule.imports`.
 
 ### Changed
 
 - Migrated to Angular 20 (`@angular/core` `~20.3.26`).
-- Converted all three library components and the demo app to standalone.
 - Converted the public API to signals-first APIs (`input()`, `output()`, `viewChild()`).
-- Replaced the dead TSLint/codelyzer setup with ESLint + `angular-eslint`.
 
 ## [19.0.2] - 2025-06-22
 

@@ -40,6 +40,7 @@
               <lib-custom-img
                 [imageUrl]="img?.thumbImage || img?.posterImage || img?.video"
                 [isVideo]="!!(img?.posterImage || img?.video)"
+                [showVideoControls]="0"
                 [alt]="img?.alt || ''"
                 [title]="img?.title || ''"
                 [direction]="textDirection"
