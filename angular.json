@@ -16,11 +16,10 @@
             },
             "index": "src/index.html",
             "tsConfig": "src/tsconfig.app.json",
-            "polyfills": ["src/polyfills.ts"],
+            "polyfills": ["zone.js"],
             "assets": ["src/assets", "src/favicon.ico"],
             "styles": ["src/styles.css"],
             "scripts": [],
-            "aot": false,
             "extractLicenses": false,
             "sourceMap": true,
             "optimization": false,
@@ -33,7 +32,6 @@
               "outputHashing": "all",
               "sourceMap": false,
               "namedChunks": false,
-              "aot": true,
               "extractLicenses": true
             }
           },
