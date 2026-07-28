@@ -4,6 +4,13 @@
 
 ### Fixed
 
+- **Advancing the lightbox threw `TypeError: video.pause is not a function` when a `<video>` was
+  present.** The pause-all-media loops iterated the live `HTMLCollection` with `for...in`, which
+  also yields the collection's inherited enumerable members (`length`, `item`, `namedItem`) —
+  and `item` passes a plain truthiness guard. Both loops now snapshot with `Array.from` and use
+  `for...of`, so only real elements are visited. The `<iframe>` loop was unaffected in practice
+  (those members have no `contentWindow`), just wasteful.
+
 - **Slides with an extensionless URL rendered "Invalid file format" instead of the image.**
   Making the invalid-format branch reachable in 21.2.0 exposed a much older misclassification:
   any URL whose path carries no file extension — the norm for CDNs, image services and signed
