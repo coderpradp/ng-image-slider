@@ -1,17 +1,17 @@
-@if (type === INVALID) {
+@if (type() === INVALID) {
   <div [dir]="direction()" class="invalid-msg">Invalid file format</div>
-} @else if (fileUrl || videoSrc) {
+} @else if (fileUrl() || videoSrc()) {
   <div
     class="custom-image-main"
-    [ngClass]="{ 'ng-fullimage-loading': imageLoading }"
+    [ngClass]="{ 'ng-fullimage-loading': imageLoading() }"
   >
-    @switch (type) {
+    @switch (type()) {
       @case (IMAGE) {
         <img
           class="image"
-          (load)="imageLoading = false"
+          (load)="imageLoading.set(false)"
           [ngClass]="{ ratio: ratio() }"
-          [src]="fileUrl"
+          [src]="fileUrl()"
           [attr.alt]="alt() ? alt() : null"
           [attr.title]="title() ? title() : null"
           [attr.loading]="lazy() === true ? 'lazy' : null"
@@ -21,7 +21,7 @@
       @case (YOUTUBE) {
         <iframe
           class="youtube"
-          [src]="fileUrl"
+          [src]="fileUrl()"
           [attr.loading]="lazy() === true ? 'lazy' : null"
           frameborder="0"
           allow="autoplay"
@@ -31,6 +31,7 @@
       @case (VIDEO) {
         <video
           class="video"
+          #videoEl
           [id]="'video_' + imageIndex()"
           [ngClass]="{ ratio: ratio() }"
           (click)="videoClickHandler($event)"
@@ -39,12 +40,12 @@
           [attr.controls]="showVideoControls() ? showVideoControls() : null"
           controlsList="nodownload"
         >
-          <source [src]="videoSrc" type="video/mp4" />
+          <source [src]="videoSrc()" type="video/mp4" />
           Your browser does not support the video tag.
         </video>
       }
     }
-    @if (type === YOUTUBE || type === VIDEO || isVideo()) {
+    @if (type() === YOUTUBE || type() === VIDEO || isVideo()) {
       <span class="youtube-icon"></span>
     }
   </div>

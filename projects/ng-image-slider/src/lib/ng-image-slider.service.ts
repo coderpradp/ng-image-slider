@@ -45,11 +45,6 @@ export class NgImageSliderService {
     return arr;
   }
 
-  /**
-   * Verify if image exist
-   * @input url: string: Image url
-   * @returns boolean: true/false
-   */
   async isImageExist(url: string): Promise<boolean> {
     if (!url) {
       return false;

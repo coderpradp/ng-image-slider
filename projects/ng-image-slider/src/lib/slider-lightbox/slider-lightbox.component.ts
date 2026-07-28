@@ -1,12 +1,17 @@
 import {
-  ChangeDetectorRef,
   Component,
+  DestroyRef,
   ElementRef,
   DOCUMENT,
+  afterRenderEffect,
+  computed,
   effect,
   inject,
   input,
+  linkedSignal,
   output,
+  signal,
+  untracked,
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
@@ -30,21 +35,13 @@ const LIGHTBOX_NEXT_ARROW_CLICK_MESSAGE: LightboxArrowAction = 'lightbox next',
   },
 })
 export class SliderLightboxComponent {
-  private cdRef = inject(ChangeDetectorRef);
   private elRef = inject(ElementRef);
   private document = inject(DOCUMENT);
 
-  totalImages = 0;
-  popupWidth = 1200;
-  marginLeft = 0;
-  imageFullscreenView = false;
-  lightboxPrevDisable = false;
-  lightboxNextDisable = false;
-  showLoading = false;
-  effectStyle = 'none';
-  speed = 1; // default speed in second
-  title = '';
-  currentImageIndex = 0;
+  readonly effectStyle = signal('none');
+
+  // Measured lazily: stays 0 during SSR, where `window` does not exist.
+  private readonly viewportWidth = signal(0);
 
   // for swipe event
   private swipeLightboxImgCoord?: [number, number];
@@ -68,36 +65,86 @@ export class SliderLightboxComponent {
   readonly prevImage = output<LightboxArrowAction>();
   readonly nextImage = output<LightboxArrowAction>();
 
+  readonly imageFullscreenView = computed(() => this.show());
+
+  // default speed in second
+  readonly speed = computed(() => {
+    const data = this.animationSpeed();
+    return typeof data === 'number' && data >= 0.1 && data <= 5 ? data : 1;
+  });
+
+  // Keeps the current slide when the incoming index is out of range.
+  readonly currentImageIndex = linkedSignal<
+    { index: number | undefined; total: number },
+    number
+  >({
+    source: () => ({ index: this.imageIndex(), total: this.images().length }),
+    computation: ({ index, total }, previous) =>
+      index !== undefined && index > -1 && index < total
+        ? index
+        : (previous?.value ?? 0),
+  });
+
+  readonly totalImages = computed(() => this.images().length);
+  readonly popupWidth = computed(() => this.viewportWidth() || 1200);
+  readonly marginLeft = computed(
+    () => -1 * this.popupWidth() * this.currentImageIndex()
+  );
+  readonly title = computed(
+    () => this.images()[this.currentImageIndex()]?.title || ''
+  );
+
+  // Locks both arrows while a slide transition is in flight, so a fast
+  // double-click cannot skip past the animation.
+  private readonly transitioning = signal(false);
+
+  readonly lightboxPrevDisable = computed(
+    () =>
+      this.transitioning() ||
+      (!this.infinite() && this.currentImageIndex() <= 0)
+  );
+  readonly lightboxNextDisable = computed(
+    () =>
+      this.transitioning() ||
+      (!this.infinite() && this.currentImageIndex() >= this.images().length - 1)
+  );
+
   constructor() {
-    effect(() => {
-      const index = this.imageIndex();
-      if (index !== undefined && index > -1 && index < this.images().length) {
-        this.currentImageIndex = index;
-      }
-      this.nextPrevDisable();
-    });
-
-    effect(() => {
-      const visiableFlag = this.show();
-      this.imageFullscreenView = visiableFlag;
+    inject(DestroyRef).onDestroy(() => {
       this.elRef.nativeElement.ownerDocument.body.style.overflow = '';
-      if (visiableFlag === true) {
-        this.elRef.nativeElement.ownerDocument.body.style.overflow = 'hidden';
-        this.setPopupSliderWidth();
-      }
     });
 
     effect(() => {
-      const data = this.animationSpeed();
-      if (data && typeof data === 'number' && data >= 0.1 && data <= 5) {
-        this.speed = data;
+      this.elRef.nativeElement.ownerDocument.body.style.overflow = this.show()
+        ? 'hidden'
+        : '';
+    });
+
+    afterRenderEffect(() => {
+      if (this.show()) {
+        this.viewportWidth.set(window.innerWidth);
       }
+    });
+
+    effect((onCleanup) => {
+      this.currentImageIndex();
+      this.transitioning.set(true);
+      const timer = setTimeout(
+        () => this.transitioning.set(false),
+        this.speed() * 1000
+      );
+      onCleanup(() => clearTimeout(timer));
+    });
+
+    effect(() => {
+      this.currentImageIndex();
+      untracked(() => this.pauseAllMedia());
     });
   }
 
   onResize() {
-    this.effectStyle = 'none';
-    this.setPopupSliderWidth();
+    this.effectStyle.set('none');
+    this.viewportWidth.set(window.innerWidth);
   }
   handleKeyboardEvent(event: KeyboardEvent) {
     if (event && event.key && this.arrowKeyMove()) {
@@ -115,101 +162,47 @@ export class SliderLightboxComponent {
     }
   }
 
-  setPopupSliderWidth() {
-    if (window && window.innerWidth) {
-      this.popupWidth = window.innerWidth;
-      this.totalImages = this.images().length;
-      if (
-        typeof this.currentImageIndex === 'number' &&
-        this.currentImageIndex !== undefined
-      ) {
-        this.marginLeft = -1 * this.popupWidth * this.currentImageIndex;
-        this.getImageData();
-        this.nextPrevDisable();
-        setTimeout(() => {
-          this.showLoading = false;
-        }, 500);
-      }
-    }
-  }
-
   closeLightbox() {
     this.closed.emit();
   }
 
   prevImageLightbox() {
-    this.effectStyle = `all ${this.speed}s ease-in-out`;
-    if (this.currentImageIndex > 0 && !this.lightboxPrevDisable) {
-      this.currentImageIndex--;
+    this.effectStyle.set(`all ${this.speed()}s ease-in-out`);
+    if (this.currentImageIndex() > 0 && !this.lightboxPrevDisable()) {
+      this.currentImageIndex.update((index) => index - 1);
       this.prevImage.emit(LIGHTBOX_PREV_ARROW_CLICK_MESSAGE);
-      this.marginLeft = -1 * this.popupWidth * this.currentImageIndex;
-      this.getImageData();
-      this.nextPrevDisable();
     }
   }
 
   nextImageLightbox() {
-    this.effectStyle = `all ${this.speed}s ease-in-out`;
+    this.effectStyle.set(`all ${this.speed()}s ease-in-out`);
     if (
-      this.currentImageIndex < this.images().length - 1 &&
-      !this.lightboxNextDisable
+      this.currentImageIndex() < this.images().length - 1 &&
+      !this.lightboxNextDisable()
     ) {
-      this.currentImageIndex++;
+      this.currentImageIndex.update((index) => index + 1);
       this.nextImage.emit(LIGHTBOX_NEXT_ARROW_CLICK_MESSAGE);
-      this.marginLeft = -1 * this.popupWidth * this.currentImageIndex;
-      this.getImageData();
-      this.nextPrevDisable();
     }
   }
 
-  nextPrevDisable() {
-    this.lightboxNextDisable = true;
-    this.lightboxPrevDisable = true;
-    setTimeout(() => {
-      this.applyButtonDisableCondition();
-    }, this.speed * 1000);
-  }
-
-  applyButtonDisableCondition() {
-    this.lightboxNextDisable = false;
-    this.lightboxPrevDisable = false;
-    const infinite = this.infinite();
-    if (!infinite && this.currentImageIndex >= this.images().length - 1) {
-      this.lightboxNextDisable = true;
+  private pauseAllMedia() {
+    const image = this.images()[this.currentImageIndex()];
+    if (!image || !(image['image'] || image['video'])) {
+      return;
     }
-    if (!infinite && this.currentImageIndex <= 0) {
-      this.lightboxPrevDisable = true;
+    // Array.from, not `for...in`: iterating an HTMLCollection with `for...in`
+    // also yields its inherited enumerable members (`length`, `item`,
+    // `namedItem`), and `item` passes a plain truthiness guard.
+    const iframes = Array.from(this.document.getElementsByTagName('iframe'));
+    for (const iframe of iframes) {
+      iframe.contentWindow?.postMessage(
+        '{"event":"command","func":"pauseVideo","args":""}',
+        '*'
+      );
     }
-    this.cdRef.detectChanges();
-  }
-
-  getImageData() {
-    const images = this.images();
-    if (
-      images &&
-      images.length &&
-      typeof this.currentImageIndex === 'number' &&
-      this.currentImageIndex !== undefined &&
-      images[this.currentImageIndex] &&
-      (images[this.currentImageIndex]['image'] ||
-        images[this.currentImageIndex]['video'])
-    ) {
-      this.title = images[this.currentImageIndex]['title'] || '';
-      this.totalImages = images.length;
-      // Array.from, not `for...in`: iterating an HTMLCollection with `for...in`
-      // also yields its inherited enumerable members (`length`, `item`,
-      // `namedItem`), and `item` passes a plain truthiness guard.
-      const iframes = Array.from(this.document.getElementsByTagName('iframe'));
-      for (const iframe of iframes) {
-        iframe.contentWindow?.postMessage(
-          '{"event":"command","func":"pauseVideo","args":""}',
-          '*'
-        );
-      }
-      const videos = Array.from(this.document.getElementsByTagName('video'));
-      for (const video of videos) {
-        video.pause();
-      }
+    const videos = Array.from(this.document.getElementsByTagName('video'));
+    for (const video of videos) {
+      video.pause();
     }
   }
 

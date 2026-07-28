@@ -1,9 +1,12 @@
 import {
   Component,
-  OnChanges,
-  SimpleChanges,
+  ElementRef,
+  afterRenderEffect,
+  computed,
   inject,
   input,
+  linkedSignal,
+  viewChild,
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
@@ -16,12 +19,26 @@ const youtubeRegExp =
   validFileExtensions = ['jpeg', 'jpg', 'gif', 'png'],
   validVideoExtensions = ['mp4'];
 
+interface ResolvedSource {
+  type: string;
+  // Only ever a trust-bypassed value or ''. Must stay falsy while no URL has
+  // resolved: an item with no URL leaves it '', and the template's
+  // `@else if (fileUrl() || videoSrc())` is what makes it render nothing. A
+  // bypassSecurityTrust* call would return a truthy SafeValue even for an empty
+  // URL and defeat that gate.
+  fileUrl: SafeResourceUrl;
+  // Must stay a plain string: `source|src` has no entry in Angular's security
+  // schema, so a SafeValue bound here is never unwrapped and reaches the DOM as
+  // its toString() text ("SafeValue must use [property]=binding: ...").
+  videoSrc: string | null;
+}
+
 @Component({
   selector: 'lib-custom-img',
   templateUrl: './slider-custom-image.component.html',
   imports: [CommonModule],
 })
-export class SliderCustomImageComponent implements OnChanges {
+export class SliderCustomImageComponent {
   imageSliderService = inject(NgImageSliderService);
   private sanitizer = inject(DomSanitizer);
 
@@ -30,20 +47,7 @@ export class SliderCustomImageComponent implements OnChanges {
   VIDEO = 'video';
   INVALID = 'invalid';
 
-  // Only ever holds a trust-bypassed value or ''. Must stay falsy while no URL
-  // has resolved: an item with no URL leaves it '', and the template's
-  // `@else if (fileUrl || videoSrc)` is what makes it render nothing. A
-  // bypassSecurityTrust* call would return a truthy SafeValue even for an empty
-  // URL and defeat that gate.
-  fileUrl: SafeResourceUrl = '';
-
-  // Must stay a plain string: `source|src` has no entry in Angular's security
-  // schema, so a SafeValue bound here is never unwrapped and reaches the DOM as
-  // its toString() text ("SafeValue must use [property]=binding: ...").
-  videoSrc: string | null = null;
-
-  type = this.IMAGE;
-  imageLoading = true;
+  private readonly videoEl = viewChild<ElementRef<HTMLVideoElement>>('videoEl');
 
   // @inputs
   readonly showVideo = input<boolean>(false);
@@ -60,28 +64,10 @@ export class SliderCustomImageComponent implements OnChanges {
   readonly lazy = input<boolean>(false);
   readonly fallbackImage = input<string>();
 
-  ngOnChanges(changes: SimpleChanges) {
-    // `changes['imageUrl']` is present only when the value actually differs, so
-    // this covers the first change and any later in-place mutation of a slide
-    // object (the parent's `@for` tracks by identity, so the component instance
-    // is reused rather than recreated). The videoAutoPlay arm re-resolves the
-    // URL when the lightbox autoplays a slide it navigated to.
-    if (changes['imageUrl'] || this.videoAutoPlay()) {
-      this.setUrl();
-    }
-  }
-
-  setUrl() {
-    this.imageLoading = true;
-    this.fileUrl = '';
-    this.videoSrc = null;
-
+  private readonly resolved = computed<ResolvedSource>(() => {
     const url = this.imageUrl();
     if (!url) {
-      // Cleared in place: drop back to the "nothing resolved" state instead of
-      // leaving the previous URL's type (e.g. INVALID) rendering.
-      this.type = this.IMAGE;
-      return;
+      return { type: this.IMAGE, fileUrl: '', videoSrc: null };
     }
 
     let extension = '';
@@ -93,7 +79,6 @@ export class SliderCustomImageComponent implements OnChanges {
     } else {
       let path: string;
       try {
-        // Parse the URL and extract pathname to avoid query param issues
         path = new URL(url).pathname;
       } catch {
         // Relative or malformed URL: strip query/fragment by hand.
@@ -108,51 +93,41 @@ export class SliderCustomImageComponent implements OnChanges {
       }
     }
 
-    // Check if it's a YouTube URL
     const match = url.match(youtubeRegExp);
     if (match && match[2]?.length === 11) {
       const videoId = match[2];
       if (this.showVideo()) {
-        this.type = this.YOUTUBE;
         const autoplayParam = this.videoAutoPlay() ? '1' : '0';
-        this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
-          `https://www.youtube.com/embed/${videoId}?autoplay=${autoplayParam}&enablejsapi=1&controls=${this.showVideoControls()}`
-        );
-      } else {
-        this.type = this.IMAGE;
-        this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
+        return {
+          type: this.YOUTUBE,
+          fileUrl: this.sanitizer.bypassSecurityTrustResourceUrl(
+            `https://www.youtube.com/embed/${videoId}?autoplay=${autoplayParam}&enablejsapi=1&controls=${this.showVideoControls()}`
+          ),
+          videoSrc: null,
+        };
+      }
+      return {
+        type: this.IMAGE,
+        fileUrl: this.sanitizer.bypassSecurityTrustResourceUrl(
           `https://img.youtube.com/vi/${videoId}/0.jpg`
-        );
-      }
-      return;
+        ),
+        videoSrc: null,
+      };
     }
 
-    // Check for valid image extension
     if (validFileExtensions.includes(extension)) {
-      this.type = this.IMAGE;
-      this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-      return;
+      return {
+        type: this.IMAGE,
+        fileUrl: this.sanitizer.bypassSecurityTrustResourceUrl(url),
+        videoSrc: null,
+      };
     }
 
-    // Check for valid video extension
     if (validVideoExtensions.includes(extension)) {
-      this.type = this.VIDEO;
       // fileUrl stays '' here: the VIDEO case binds videoSrc, and the template
-      // wrapper gates on `fileUrl || videoSrc`. Assigning the raw url would
+      // wrapper gates on `fileUrl() || videoSrc()`. Assigning the raw url would
       // make the SafeResourceUrl annotation a lie.
-      this.videoSrc = url;
-
-      if (this.videoAutoPlay()) {
-        const videoElement = document.getElementById(
-          `video_${this.imageIndex()}`
-        ) as HTMLVideoElement;
-        if (videoElement) {
-          setTimeout(() => {
-            videoElement.play();
-          }, this.speed() * 1000);
-        }
-      }
-      return;
+      return { type: this.VIDEO, fileUrl: '', videoSrc: url };
     }
 
     // Extensionless URLs are ordinary for CDNs and signed links, so they say
@@ -160,12 +135,37 @@ export class SliderCustomImageComponent implements OnChanges {
     // handler fall back. Only a URL that names an extension we don't support
     // is genuinely invalid.
     if (!extension) {
-      this.type = this.IMAGE;
-      this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-      return;
+      return {
+        type: this.IMAGE,
+        fileUrl: this.sanitizer.bypassSecurityTrustResourceUrl(url),
+        videoSrc: null,
+      };
     }
 
-    this.type = this.INVALID;
+    return { type: this.INVALID, fileUrl: '', videoSrc: null };
+  });
+
+  readonly type = computed(() => this.resolved().type);
+  readonly fileUrl = computed(() => this.resolved().fileUrl);
+  readonly videoSrc = computed(() => this.resolved().videoSrc);
+
+  // Resets on every new source; the template's (load) handler clears it.
+  readonly imageLoading = linkedSignal({
+    source: this.resolved,
+    computation: () => true,
+  });
+
+  constructor() {
+    afterRenderEffect((onCleanup) => {
+      const el = this.videoEl()?.nativeElement;
+      if (!el || !this.videoSrc() || !this.videoAutoPlay()) {
+        return;
+      }
+      // Delayed so playback starts once the lightbox slide transition that
+      // brought this video into view has finished.
+      const timer = setTimeout(() => el.play(), this.speed() * 1000);
+      onCleanup(() => clearTimeout(timer));
+    });
   }
 
   videoClickHandler(event: Event): void {

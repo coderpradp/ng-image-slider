@@ -52,11 +52,11 @@ export class HeroService {
     {
       video: 'https://youtu.be/6pxRHBw-k8M',
       videoAutoPlay: false,
-      posterImage: 'https://picsum.photos/582/543', //Optional: You can use this key if you want to show video poster image in slider
+      posterImage: 'https://picsum.photos/582/543',
       title: 'Image title',
     },
     {
-      video: 'assets/video/movie.mp4', // MP4 Video url
+      video: 'assets/video/movie.mp4',
     },
   ];
   getImages() {
