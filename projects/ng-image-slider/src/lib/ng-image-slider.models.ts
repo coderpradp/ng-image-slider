@@ -41,9 +41,21 @@ export interface AutoSlideOptions {
  */
 export type AutoSlideConfig = boolean | number | AutoSlideOptions;
 
+/** Text direction accepted by the `direction` input. */
+export type SliderDirection = 'ltr' | 'rtl' | 'auto';
+
+/** Sort order accepted by the `orderType` input. */
+export type SliderOrderType = 'ASC' | 'DESC';
+
+/** `action` value emitted by the `arrowClick` output. */
+export type SliderArrowAction = 'next' | 'previous';
+
+/** Value emitted by the `lightboxArrowClick` output. */
+export type LightboxArrowAction = 'lightbox next' | 'lightbox previous';
+
 /** Payload emitted by the `arrowClick` output. */
 export interface SliderArrowClickEvent {
-  action: string;
+  action: SliderArrowAction;
   prevDisable?: boolean;
   nextDisable?: boolean;
 }

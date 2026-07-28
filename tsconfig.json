@@ -1,22 +1,28 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "baseUrl": "./",
-    "importHelpers": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "outDir": "./dist/ng-image-slider",
-    "sourceMap": true,
-    "declaration": false,
-    "moduleResolution": "bundler",
-    "experimentalDecorators": true,
-    "target": "ES2022",
     "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "preserve",
+    "useDefineForClassFields": false,
+    "baseUrl": "./",
     "typeRoots": ["node_modules/@types"],
     "paths": {
-      "@coderpradp/ng-image-slider": ["dist/@coderpradp/ng-image-slider"],
-      "core-js/es7/reflect": ["node_modules/core-js/proposals/reflect-metadata"]
-    },
-    "useDefineForClassFields": false
+      "@coderpradp/ng-image-slider": ["dist/@coderpradp/ng-image-slider"]
+    }
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
   }
 }

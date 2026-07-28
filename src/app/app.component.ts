@@ -6,6 +6,8 @@ import {
   ImageObject,
   SliderFallbackImage,
   SliderArrowClickEvent,
+  SliderOrderType,
+  LightboxArrowAction,
 } from '@coderpradp/ng-image-slider';
 import { HeroService } from './hero.service';
 
@@ -34,7 +36,7 @@ export class AppComponent {
   sliderAnimationSpeed = 1;
   imageObject: ImageObject[] = [];
   fallbackImageObject: SliderFallbackImage = {};
-  slideOrderType = 'DESC';
+  slideOrderType: SliderOrderType = 'DESC';
 
   constructor() {
     this.setImageObject();
@@ -70,7 +72,7 @@ export class AppComponent {
     console.log('arrow click event', event);
   }
 
-  lightboxArrowClick(event: string) {
+  lightboxArrowClick(event: LightboxArrowAction) {
     console.log('popup arrow click', event);
   }
 

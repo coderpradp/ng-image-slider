@@ -6,7 +6,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --port 4100 --host 0.0.0.0",
-    "build": "ng build ng-image-slider --configuration production",
+    "build": "ng build ng-image-slider --configuration production && cp README.md CHANGELOG.md dist/@coderpradp/ng-image-slider/",
     "build:watch": "ng build ng-image-slider --watch --configuration production",
     "lint": "ng lint",
     "format": "prettier --write .",

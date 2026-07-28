@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
+import { SliderOrderType } from './ng-image-slider.models';
 
-const DESC = 'DESC',
-  ASC = 'ASC';
+const DESC: SliderOrderType = 'DESC',
+  ASC: SliderOrderType = 'ASC';
 
 @Injectable({ providedIn: 'root' })
 export class NgImageSliderService {
@@ -17,7 +18,7 @@ export class NgImageSliderService {
 
   orderArray<T extends { order?: number }>(
     arr: T[] = [],
-    orderType: string = ASC
+    orderType: SliderOrderType = ASC
   ): T[] {
     if (arr?.length && orderType) {
       return arr.sort((ob1, ob2) => {
