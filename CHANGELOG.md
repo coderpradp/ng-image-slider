@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [21.2.1] - 2026-07-28
 
 ### Fixed
 
@@ -110,6 +110,7 @@
 
 Baseline release for this changelog; see the git history for earlier versions.
 
+[21.2.1]: https://github.com/coderpradp/ng-image-slider/compare/v21.2.0...v21.2.1
 [21.2.0]: https://github.com/coderpradp/ng-image-slider/compare/v21.1.1...v21.2.0
 [21.1.1]: https://github.com/coderpradp/ng-image-slider/compare/v21.1.0...v21.1.1
 [21.1.0]: https://github.com/coderpradp/ng-image-slider/compare/v21.0.0...v21.1.0
