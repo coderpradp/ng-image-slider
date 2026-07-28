@@ -1,40 +1,40 @@
-<div class="ng-image-slider" [ngStyle]="{ height: sliderImageHeight + 'px' }">
+<div class="ng-image-slider" [ngStyle]="{ height: sliderImageHeight() + 'px' }">
   <div class="ng-image-slider-container">
     <div
       class="main"
-      [ngStyle]="{ height: sliderImageHeight + 'px' }"
+      [ngStyle]="{ height: sliderImageHeight() + 'px' }"
       #sliderMain
     >
-      @if (imageObj.length) {
+      @if (imageObj().length) {
         <div
           class="main-inner"
           [ngClass]="{ 'with-ng-main-pagination': paginationShow() }"
           [ngStyle]="{
-            'margin-left': leftPos + 'px',
-            width: imageParentDivWidth + 'px',
-            transition: effectStyle,
+            'margin-left': leftPos() + 'px',
+            width: imageParentDivWidth() + 'px',
+            transition: effectStyle(),
           }"
           (touchstart)="swipe($event, 'start')"
           (touchend)="swipe($event, 'end')"
         >
-          @for (img of imageObj; track img; let i = $index) {
+          @for (img of imageObj(); track img; let i = $index) {
             <div
               [ngClass]="{
                 'image-popup': imagePopup(),
-                'selected-image': activeImageIndex === i,
+                'selected-image': activeImageIndex() === i,
               }"
               [ngStyle]="{
-                width: sliderImageWidth + 'px',
-                'margin-left': imageMargin + 'px',
-                'margin-right': imageMargin + 'px',
+                width: sliderImageWidth() + 'px',
+                'margin-left': imageMargin() + 'px',
+                'margin-right': imageMargin() + 'px',
               }"
               class="img-div"
               role="button"
               tabindex="0"
               (click)="imageOnClick(img.index!)"
               (keyup.enter)="imageOnClick(img.index!)"
-              (mouseenter)="stopSlideOnHover && imageMouseEnterHandler()"
-              (mouseleave)="stopSlideOnHover && imageAutoSlide()"
+              (mouseenter)="imageMouseEnterHandler()"
+              (mouseleave)="imageMouseLeaveHandler()"
               #imageDiv
             >
               <lib-custom-img
@@ -43,14 +43,14 @@
                 [showVideoControls]="0"
                 [alt]="img?.alt || ''"
                 [title]="img?.title || ''"
-                [direction]="textDirection"
+                [direction]="textDirection()"
                 [ratio]="manageImageRatio()"
                 [lazy]="lazyLoading()"
-                [fallbackImage]="fallbackThumbImage"
+                [fallbackImage]="fallbackThumbImage()"
               >
               </lib-custom-img>
               @if (img?.title) {
-                <div [dir]="textDirection" class="caption">
+                <div [dir]="textDirection()" class="caption">
                   {{ img?.title }}
                 </div>
               }
@@ -58,59 +58,59 @@
           }
         </div>
       }
-      @if (!imageObj.length) {
+      @if (!imageObj().length) {
         <div class="ng-image-slider-error">
           <span class="ng-image-slider-loader"></span>
         </div>
       }
-      @if (showArrowButton && imageObj.length > 1) {
+      @if (showArrowButton() && imageObj().length > 1) {
         <span
-          [ngClass]="{ disable: sliderPrevDisable }"
+          [ngClass]="{ disable: sliderPrevDisable() }"
           class="prev icons prev-icon"
           role="button"
           tabindex="0"
           (click)="prev()"
           (keyup.enter)="prev()"
-          (mouseenter)="stopSlideOnHover && imageMouseEnterHandler()"
-          (mouseleave)="stopSlideOnHover && imageAutoSlide()"
+          (mouseenter)="imageMouseEnterHandler()"
+          (mouseleave)="imageMouseLeaveHandler()"
           >&lsaquo;</span
         >
       }
-      @if (showArrowButton && imageObj.length > 1) {
+      @if (showArrowButton() && imageObj().length > 1) {
         <span
-          [ngClass]="{ disable: sliderNextDisable }"
+          [ngClass]="{ disable: sliderNextDisable() }"
           class="next icons next-icon"
           role="button"
           tabindex="0"
           (click)="next()"
           (keyup.enter)="next()"
           (mouseenter)="imageMouseEnterHandler()"
-          (mouseleave)="imageAutoSlide()"
+          (mouseleave)="imageMouseLeaveHandler()"
           >&rsaquo;</span
         >
       }
     </div>
-    @if (imageObj.length && paginationShow()) {
+    @if (imageObj().length && paginationShow()) {
       <div class="ng-main-pagination">
-        {{ visiableImageIndex + 1 }} of {{ totalImages }}
+        {{ visiableImageIndex() + 1 }} of {{ totalImages() }}
       </div>
     }
   </div>
 </div>
-@if (ligthboxShow) {
+@if (ligthboxShow()) {
   <div>
     <lib-slider-lightbox
       [paginationShow]="paginationShow()"
       [showVideoControls]="showVideoControls()"
       [arrowKeyMove]="arrowKeyMove()"
-      [images]="ligthboxImageObj"
+      [images]="ligthboxImageObj()"
       [infinite]="infinite()"
-      [animationSpeed]="speed"
-      [imageIndex]="activeImageIndex"
-      [show]="ligthboxShow"
-      [direction]="textDirection"
+      [animationSpeed]="speed()"
+      [imageIndex]="activeImageIndex()"
+      [show]="ligthboxShow()"
+      [direction]="textDirection()"
       [videoAutoPlay]="videoAutoPlay()"
-      [fallbackImage]="fallbackMainImage"
+      [fallbackImage]="fallbackMainImage()"
       (prevImage)="lightboxArrowClickHandler($event)"
       (nextImage)="lightboxArrowClickHandler($event)"
       (closed)="close()"
