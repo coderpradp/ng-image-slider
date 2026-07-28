@@ -1,9 +1,18 @@
 # Changelog
 
-## [21.2.1] - 2026-07-28
+## [21.3.0] - 2026-07-29
 
 ### Changed
 
+- Internal state moved from lifecycle hooks to signals. Every hook is gone, replaced by
+  `computed`/`linkedSignal`, `afterRenderEffect` and `DestroyRef`. The slider no longer does work
+  on every change-detection cycle.
+
+  **Potentially breaking**: `@Input`/`@Output` and methods like `prev()`/`next()` are unchanged,
+  but state read off a component instance via `ViewChild` is now a signal — call it as a function
+  (`slider.imageObj()`, `img.type()`).
+
+- Hovering the next arrow now respects `autoSlide.stopOnHover`, matching the previous arrow.
 - The lightbox now closes only via its close button or `Escape`. The click-outside overlay each
   slide carried has been removed.
 - Video thumbnails render as plain posters instead of interactive players, matching the YouTube
@@ -21,6 +30,12 @@
   invalid.
 - Extension detection no longer reads a dot from an earlier path segment, so
   `https://example.com/v1.2/photo` is no longer misread.
+- The selected-thumbnail highlight no longer sticks to a stale index when `images` is replaced by a
+  shorter list or emptied. The selection is dropped once the list no longer has that slot.
+
+### Removed
+
+- The lightbox pre-loader spinner, which could never render.
 
 ## [21.2.0] - 2026-07-28
 
@@ -87,7 +102,7 @@
 
 Baseline release for this changelog; see the git history for earlier versions.
 
-[21.2.1]: https://github.com/coderpradp/ng-image-slider/compare/v21.2.0...v21.2.1
+[21.3.0]: https://github.com/coderpradp/ng-image-slider/compare/v21.2.0...v21.3.0
 [21.2.0]: https://github.com/coderpradp/ng-image-slider/compare/v21.1.1...v21.2.0
 [21.1.1]: https://github.com/coderpradp/ng-image-slider/compare/v21.1.0...v21.1.1
 [21.1.0]: https://github.com/coderpradp/ng-image-slider/compare/v21.0.0...v21.1.0
