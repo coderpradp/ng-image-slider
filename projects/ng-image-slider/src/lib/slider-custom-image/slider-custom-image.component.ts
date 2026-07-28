@@ -28,7 +28,19 @@ export class SliderCustomImageComponent implements OnChanges {
   YOUTUBE = 'youtube';
   IMAGE = 'image';
   VIDEO = 'video';
+  INVALID = 'invalid';
+
+  // Must stay falsy while no URL has resolved: an item with no URL never runs
+  // setUrl(), and the template's `@else if (fileUrl)` is what makes it render
+  // nothing. A bypassSecurityTrust* call would return a truthy SafeValue even
+  // for an empty URL and defeat that gate.
   fileUrl: SafeResourceUrl = '';
+
+  // Must stay a plain string: `source|src` has no entry in Angular's security
+  // schema, so a SafeValue bound here is never unwrapped and reaches the DOM as
+  // its toString() text ("SafeValue must use [property]=binding: ...").
+  videoSrc: string | null = null;
+
   type = this.IMAGE;
   imageLoading = true;
 
@@ -63,6 +75,7 @@ export class SliderCustomImageComponent implements OnChanges {
       return;
     }
     this.imageLoading = true;
+    this.videoSrc = null;
 
     let extension = '';
 
@@ -119,7 +132,11 @@ export class SliderCustomImageComponent implements OnChanges {
     // Check for valid video extension
     if (validVideoExtensions.includes(extension)) {
       this.type = this.VIDEO;
-      this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      // In this branch fileUrl only gates the template wrapper — the VIDEO case
+      // binds videoSrc, not fileUrl — so it needs no trust bypass. Other
+      // branches do bind fileUrl into img/iframe [src] and must keep theirs.
+      this.fileUrl = url;
+      this.videoSrc = url;
 
       if (this.videoAutoPlay()) {
         const videoElement = document.getElementById(
@@ -134,9 +151,8 @@ export class SliderCustomImageComponent implements OnChanges {
       return;
     }
 
-    // Fallback for unknown extensions: default to image
-    this.fileUrl = this.sanitizer.bypassSecurityTrustResourceUrl('');
-    this.type = this.IMAGE;
+    this.fileUrl = '';
+    this.type = this.INVALID;
   }
 
   videoClickHandler(event: Event): void {

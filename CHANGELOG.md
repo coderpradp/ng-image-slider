@@ -27,6 +27,29 @@
 
 ### Fixed
 
+- **`<source [src]>` inside the video player received a `SafeValue` instead of a URL.** `setUrl()`
+  wrapped every branch's URL in `bypassSecurityTrustResourceUrl()`, including the video branch, and
+  the template bound that one `fileUrl` field into `<source [src]>`. Angular has no sanitizer
+  registered for the `source|src` pair, so the value was never unwrapped and reached the DOM as its
+  `toString()` text — `"SafeValue must use [property]=binding: ..."` — which the browser then
+  resolved as a relative URL, firing a bogus same-origin request that 404'd for every video item.
+  Because the `<video>` element carries no `src` of its own, that `<source>` was its only media
+  resource, so **mp4 playback was broken outright** — not merely accompanied by console and network
+  noise. The video URL is now carried in a separate plain-string field, so it reaches the DOM
+  as-written; the YouTube `<iframe>` keeps its `SafeResourceUrl`, which it genuinely requires.
+  (Note that `source|src` carries `SecurityContext.NONE`, so Angular applies no sanitization to it
+  either way — this restores correct behavior, it does not add sanitization that was missing.)
+
+- **"Invalid file format" could never be displayed.** Two independent faults hid it. The
+  unknown-extension fallback in `setUrl()` assigned `bypassSecurityTrustResourceUrl('')`, which
+  returns a truthy `SafeValue` object, so the `@if (!fileUrl)` guard never fired; and that guard
+  was itself nested inside the outer `@if (fileUrl)` wrapper, making the two conditions mutually
+  exclusive and the branch unreachable regardless. An item with an unsupported extension (e.g.
+  `.webp`) rendered an `<img src="">` instead of the message, which browsers resolve against the
+  document URL — another spurious request. Unresolvable items now carry an explicit `invalid` type
+  that the template checks before anything else, so the message renders instead of depending on a
+  falsy sentinel. Items carrying no URL at all continue to render nothing, as before.
+
 - **Documentation: the `orderType` input was documented under the wrong name.** Both READMEs listed
   it as `slideOrderType`, which is not a real input — copying the documented binding produced a
   template error. The name in the demo app (`[orderType]="slideOrderType"`) is a local field, which
